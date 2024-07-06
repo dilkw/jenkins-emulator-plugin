@@ -12,7 +12,7 @@ import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.tasks.BuildStepDescriptor;
 
-public class AndroidEmulatorBuildStep extends Builder {
+public class AndroidEmulatorRunTest extends Builder {
 
     private String gradleCmd;
     private String archiveSourceRoot;
@@ -30,10 +30,10 @@ public class AndroidEmulatorBuildStep extends Builder {
         return archiveDestinationRoot;
     }
 
-    public AndroidEmulatorBuildStep(){}
+    public AndroidEmulatorRunTest(){}
 
     @DataBoundConstructor
-    public AndroidEmulatorBuildStep(
+    public AndroidEmulatorRunTest(
         String gradleCmd,
         String archiveRoot,
         String archiveDestinationRoot
@@ -45,13 +45,13 @@ public class AndroidEmulatorBuildStep extends Builder {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-        ProcessBuilder builder = new ProcessBuilder();
-        builder.command("bash", "-c", "./" + gradleCmd);
-        Process process = builder.start();
-        int exitCode = process.waitFor();
-        builder.command("bash", "-c", "cp " + archiveSourceRoot + " " + archiveDestinationRoot );
-        Process process2 = builder.start();
-        process2.waitFor();
+        // ProcessBuilder builder = new ProcessBuilder();
+        // builder.command("bash", "-c", "./" + gradleCmd);
+        // Process process = builder.start();
+        // int exitCode = process.waitFor();
+        // builder.command("bash", "-c", "cp " + archiveSourceRoot + " " + archiveDestinationRoot );
+        // Process process2 = builder.start();
+        // process2.waitFor();
         return true;
     }
 

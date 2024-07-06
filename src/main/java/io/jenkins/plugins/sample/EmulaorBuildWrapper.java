@@ -7,7 +7,7 @@ import hudson.tasks.BuildWrapperDescriptor;
 import java.io.File;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class EmulaorRunTestBuildWrapper extends BuildWrapper {
+public class EmulaorBuildWrapper extends BuildWrapper {
 
     private boolean enableOptions;
     private String SDKRoot;
@@ -41,7 +41,7 @@ public class EmulaorRunTestBuildWrapper extends BuildWrapper {
     public String getTargetABI() {return targetABI;}
 
     @DataBoundConstructor
-    public EmulaorRunTestBuildWrapper(
+    public EmulaorBuildWrapper(
         boolean enableOptions,
         String SDKRoot,
         String buildTools,
