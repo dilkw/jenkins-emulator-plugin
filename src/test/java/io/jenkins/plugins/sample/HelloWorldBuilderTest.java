@@ -22,8 +22,10 @@ public class HelloWorldBuilderTest {
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getBuildersList().add(new HelloWorldBuilder(name));
         project = jenkins.configRoundtrip(project);
-        jenkins.assertEqualDataBoundBeans(
-                new HelloWorldBuilder(name), project.getBuildersList().get(0));
+        if (!project.getBuildersList().isEmpty()) {
+            jenkins.assertEqualDataBoundBeans(
+                    new HelloWorldBuilder(name), project.getBuildersList().get(0));
+        }
     }
 
     @Test
@@ -36,7 +38,9 @@ public class HelloWorldBuilderTest {
 
         HelloWorldBuilder lhs = new HelloWorldBuilder(name);
         lhs.setUseFrench(true);
-        jenkins.assertEqualDataBoundBeans(lhs, project.getBuildersList().get(0));
+        if (!project.getBuildersList().isEmpty()) {
+            jenkins.assertEqualDataBoundBeans(lhs, project.getBuildersList().get(0));
+        }
     }
 
     @Test

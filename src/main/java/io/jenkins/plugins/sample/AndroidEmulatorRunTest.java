@@ -1,16 +1,16 @@
 package io.jenkins.plugins.sample;
 
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.Builder;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import hudson.Extension;
-import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.tasks.Builder;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.tasks.BuildStepDescriptor;
 
 public class AndroidEmulatorRunTest extends Builder {
 
@@ -30,21 +30,18 @@ public class AndroidEmulatorRunTest extends Builder {
         return archiveDestinationRoot;
     }
 
-    public AndroidEmulatorRunTest(){}
+    public AndroidEmulatorRunTest() {}
 
     @DataBoundConstructor
-    public AndroidEmulatorRunTest(
-        String gradleCmd,
-        String archiveRoot,
-        String archiveDestinationRoot
-    ) {
+    public AndroidEmulatorRunTest(String gradleCmd, String archiveRoot, String archiveDestinationRoot) {
         this.gradleCmd = gradleCmd;
         this.archiveSourceRoot = archiveRoot;
         this.archiveDestinationRoot = archiveDestinationRoot;
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+            throws InterruptedException, IOException {
         // ProcessBuilder builder = new ProcessBuilder();
         // builder.command("bash", "-c", "./" + gradleCmd);
         // Process process = builder.start();
@@ -65,10 +62,6 @@ public class AndroidEmulatorRunTest extends Builder {
             return "Run Android Emulator and UI Tests";
         }
 
-        public void doCheckName(@QueryParameter String value)
-                throws IOException, ServletException {
-            
-        }
+        public void doCheckName(@QueryParameter String value) throws IOException, ServletException {}
     }
-    
 }

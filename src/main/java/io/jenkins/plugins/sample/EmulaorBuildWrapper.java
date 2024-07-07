@@ -20,39 +20,58 @@ public class EmulaorBuildWrapper extends BuildWrapper {
     private String SDCardSize;
     private String targetABI;
 
-    public boolean isEnableOptions() {return enableOptions;}
+    public boolean isEnableOptions() {
+        return enableOptions;
+    }
 
-    public String getSDKRoot() {return SDKRoot;}
+    public String getSDKRoot() {
+        return SDKRoot;
+    }
 
-    public String getBuildTools() {return buildTools;}
+    public String getBuildTools() {
+        return buildTools;
+    }
 
-    public String getEmulatorName() {return emulatorName;}
+    public String getEmulatorName() {
+        return emulatorName;
+    }
 
-    public String getAndroidOSVersion() {return androidOSVersion;}
+    public String getAndroidOSVersion() {
+        return androidOSVersion;
+    }
 
-    public String getDensity() {return density;}
+    public String getDensity() {
+        return density;
+    }
 
-    public String getResolution() {return resolution;}
+    public String getResolution() {
+        return resolution;
+    }
 
-    public String getDevideLocale() {return devideLocale;}
+    public String getDevideLocale() {
+        return devideLocale;
+    }
 
-    public String getSDCardSize() {return SDCardSize;}
+    public String getSDCardSize() {
+        return SDCardSize;
+    }
 
-    public String getTargetABI() {return targetABI;}
+    public String getTargetABI() {
+        return targetABI;
+    }
 
     @DataBoundConstructor
     public EmulaorBuildWrapper(
-        boolean enableOptions,
-        String SDKRoot,
-        String buildTools,
-        String emulatorName,
-        String androidOSVersion,
-        String density,
-        String resolution,
-        String devideLocale,
-        String SDCardSize,
-        String targetABI
-    ) {
+            boolean enableOptions,
+            String SDKRoot,
+            String buildTools,
+            String emulatorName,
+            String androidOSVersion,
+            String density,
+            String resolution,
+            String devideLocale,
+            String SDCardSize,
+            String targetABI) {
         this.enableOptions = enableOptions;
         this.SDKRoot = SDKRoot;
         this.buildTools = buildTools;
@@ -77,10 +96,7 @@ public class EmulaorBuildWrapper extends BuildWrapper {
         public String getDisplayName() {
             return "Run Android Emulator and UI Tests";
         }
-
-        
     }
-
 
     public boolean checkFilePath(String pathString) {
         File file = new File(pathString);

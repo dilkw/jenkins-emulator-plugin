@@ -1,3 +1,4 @@
 {
-    "java.compile.nullAnalysis.mode": "disabled"
+    "java.compile.nullAnalysis.mode": "disabled",
+    "java.jdt.ls.java.home": "E:\\jdk\\jdk-17.0.11"
 }
