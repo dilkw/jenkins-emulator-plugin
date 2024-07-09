@@ -35,7 +35,7 @@ public class HelloWorldAction implements RunAction2 {
 
     @Override
     public String getIconFileName() {
-        return "document.png";
+        return "/plugin/dilkw/images/icon_test_report.png";
     }
 
     @Override
