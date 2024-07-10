@@ -1,7 +1,12 @@
 package io.jenkins.plugins.sample;
 
+import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
 import hudson.model.AbstractProject;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
 
 import java.io.IOException;
@@ -38,6 +43,10 @@ public class AndroidEmulatorRunTestWrapper extends SimpleBuildWrapper {
         this.archiveDestinationRoot = archiveDestinationRoot;
     }
 
+    @Override
+    public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
+
+    }
 
     @Extension
     public static final class DescriptorImpl extends BuildWrapperDescriptor {

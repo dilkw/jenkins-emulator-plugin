@@ -3,36 +3,29 @@ package io.jenkins.plugins.sample.cmd;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.cli.CLICommand;
 import hudson.model.TaskListener;
-import hudson.model.User;
 import hudson.util.ArgumentListBuilder;
+import hudson.util.ForkOutputStream;
 import hudson.util.StreamTaskListener;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.apache.commons.io.input.NullInputStream;
 
-public class SDKCLICommand<R> extends CLICommand {
-
-    private ArgumentListBuilder arguments;
-
+public class CLICommand<R> extends hudson.cli.CLICommand {
+    private final ArgumentListBuilder arguments;
     private final FilePath command;
-
     private final Map<String, String> env;
     private final InputStream stdin = new NullInputStream(0);
     private final FilePath root;
-    // private OutputParser<R> parser;
+
+    private OutputParser<R> parser;
 
     public ArgumentListBuilder getArguments() {
         return arguments;
     }
 
-    public void setArguments(ArgumentListBuilder arguments) {
-        this.arguments = arguments;
-    }
-
-    SDKCLICommand(FilePath command, ArgumentListBuilder arguments, Map<String, String> env, FilePath root) {
+    CLICommand(FilePath command, ArgumentListBuilder arguments, Map<String, String> env, FilePath root) {
         this.command = command;
         this.arguments = arguments;
         this.env = env;
@@ -45,21 +38,11 @@ public class SDKCLICommand<R> extends CLICommand {
     }
 
     @Override
-    protected int run() throws Exception {
-
-        User user = User.current();
-        // 执行一些自定义逻辑
-        if (user != null) {
-            stdout.println("Hello, " + user.getId() + "!");
-        } else {
-            stdout.println("Hello, anonymous user!");
-        }
-
+    public int run() throws Exception {
+        execute();
         // 返回退出代码
         return 0;
     }
-
-    public void installSDK() throws Exception {}
 
     public R execute() throws IOException, InterruptedException {
         return execute(new StreamTaskListener(OutputStream.nullOutputStream(), StandardCharsets.UTF_8));
@@ -69,37 +52,39 @@ public class SDKCLICommand<R> extends CLICommand {
         ArgumentListBuilder args = getArguments();
 
         // command.createLauncher(output)
-        Launcher.ProcStarter starter = command.createLauncher(output)
+
+        Launcher launcher = command.createLauncher(output);
+        launcher.isUnix();
+        Launcher.ProcStarter starter = launcher
                 .launch() //
                 .envs(env) //
                 .stdin(stdin) //
                 .pwd(root == null ? command.getParent() : root) //
                 .cmds(args) //
                 .masks(args.toMaskArray());
-
-        // ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        //        if (output != null) {
-        //            if (parser != null) {
-        //                // clone output to make content available to the parser
-        //                starter.stdout(new ForkOutputStream(output.getLogger(), baos));
-        //            } else {
-        //                starter.stdout(output);
-        //            }
-        //        } else if (parser != null) {
-        //            starter.stdout(baos);
-        //        }
-
         starter.stdout(output);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        if (parser != null) {
+            // clone output to make content available to the parser
+            starter.stdout(new ForkOutputStream(output.getLogger(), baos));
+        } else {
+            starter.stdout(output);
+        }
 
         int exitCode = starter.join();
         if (exitCode != 0) {
-            throw new IOException(
-                    command.getBaseName() + " " + arguments.toString() + " failed. exit code: " + exitCode + ".");
+            throw new IOException(command.getBaseName() + " " + arguments.toString() + " failed. exit code: " + exitCode + ".");
         }
 
-        //        if (parser != null) {
-        //            return parser.parse(new ByteArrayInputStream(baos.toByteArray()));
-        //        }
+        if (parser != null) {
+            return parser.parse(new ByteArrayInputStream(baos.toByteArray()));
+        }
         return null;
     }
+
+
+    public interface OutputParser<R> {
+        R parse(InputStream input) throws IOException;
+    }
+
 }
