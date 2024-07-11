@@ -12,20 +12,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.apache.commons.io.input.NullInputStream;
 
-public class CLICommand<R> extends hudson.cli.CLICommand {
+public class ChristelleCLICommand<R> extends hudson.cli.CLICommand {
     private final ArgumentListBuilder arguments;
     private final FilePath command;
     private final Map<String, String> env;
     private final InputStream stdin = new NullInputStream(0);
     private final FilePath root;
-
     private OutputParser<R> parser;
 
     public ArgumentListBuilder getArguments() {
         return arguments;
     }
 
-    CLICommand(FilePath command, ArgumentListBuilder arguments, Map<String, String> env, FilePath root) {
+    ChristelleCLICommand(FilePath command, ArgumentListBuilder arguments, Map<String, String> env, FilePath root) {
         this.command = command;
         this.arguments = arguments;
         this.env = env;
@@ -80,6 +79,11 @@ public class CLICommand<R> extends hudson.cli.CLICommand {
             return parser.parse(new ByteArrayInputStream(baos.toByteArray()));
         }
         return null;
+    }
+
+    public ChristelleCLICommand<R> withParser(OutputParser<R> parser) {
+        this.parser = parser;
+        return this;
     }
 
 

@@ -1,4 +1,4 @@
-package io.jenkins.plugins.sample.cmd.help;
+package io.jenkins.plugins.sample.cmd.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

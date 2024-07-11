@@ -1,14 +1,19 @@
 package io.jenkins.plugins.sample.cmd;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.FilePath;
+import hudson.Launcher;
 import hudson.Util;
+import hudson.remoting.VirtualChannel;
 import hudson.util.ArgumentListBuilder;
 import io.jenkins.plugins.sample.Constants;
-import io.jenkins.plugins.sample.cmd.help.SDKPackages;
-import io.jenkins.plugins.sample.cmd.help.Version;
+import io.jenkins.plugins.sample.cmd.help.Channel;
+import io.jenkins.plugins.sample.cmd.help.Platform;
+import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
+import io.jenkins.plugins.sample.cmd.help.Utils;
+import io.jenkins.plugins.sample.cmd.model.SDKPackages;
+import io.jenkins.plugins.sample.cmd.model.Version;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -19,11 +24,12 @@ import java.util.*;
 public class SDKManagerCLIBuilder implements Cloneable {
 
 
-    private String sdkRoot = "";
-    private ArgumentListBuilder arguments;
-    private FilePath command;
-    private Map<String, String> env;
+    private final ArgumentListBuilder arguments;
+    private FilePath executable;;
+    private EnvVars env;
     private FilePath root;
+    private Channel channel = Channel.STABLE;
+    private String sdkRoot;
 
     private static final String NO_PREFIX = "";
     private static final String ARG_OBSOLETE = "--include_obsolete";
@@ -42,8 +48,8 @@ public class SDKManagerCLIBuilder implements Cloneable {
         this.arguments.add(Constants.SDK_MANAGER);
     }
 
-    public SDKManagerCLIBuilder command(@NonNull final FilePath command) {
-        this.command = command;
+    public SDKManagerCLIBuilder command(@NonNull final FilePath executable) {
+        this.executable = executable;
         return this;
     }
 
@@ -54,6 +60,11 @@ public class SDKManagerCLIBuilder implements Cloneable {
 
     public SDKManagerCLIBuilder setSdkRoot(@NonNull final String sdkRoot) {
         this.sdkRoot = sdkRoot;
+        return this;
+    }
+
+    public SDKManagerCLIBuilder setChannel(@NonNull final Channel channel) {
+        this.channel = channel;
         return this;
     }
 
@@ -75,20 +86,39 @@ public class SDKManagerCLIBuilder implements Cloneable {
 
     public SDKManagerCLIBuilder root(@NonNull final FilePath root) {
         this.root = root;
-
         return this;
     }
 
-    public CLICommand<Void> buildCommand() {
-        return new CLICommand<Void>(command, arguments, env, root);
+    private SDKManagerCLIBuilder setExe(final Launcher launcher) throws IOException, InterruptedException {
+        final VirtualChannel channel = launcher.getChannel();
+        if (channel == null) {
+            throw new IOException("Unable to get a channel for the launcher");
+        }
+        executable = new FilePath(channel, sdkRoot);
+        return this;
+    }
+
+    public ChristelleCLICommand<Void> buildCommand() {
+        return new ChristelleCLICommand<Void>(executable, arguments, env, root);
+    }
+
+    public ChristelleCLICommand<SDKPackages> list() {
+        ListPackagesParser parser = new ListPackagesParser();
+        ChristelleCLICommand<SDKPackages> christelleCLICommand = new ChristelleCLICommand<>(executable, arguments, env, root);
+        return christelleCLICommand.withParser(parser);
+    }
+
+    public ChristelleCLICommand<Void> installSDK() throws Exception {
+        if (!root.exists()) {
+            root.mkdirs();
+        }
+        return new ChristelleCLICommand<Void>(executable, arguments, env, root);
     }
 
     @Override
     public SDKManagerCLIBuilder clone() {
         try {
-            SDKManagerCLIBuilder clone = (SDKManagerCLIBuilder) super.clone();
-            // TODO: copy mutable state here, so the clone can't change the internals of the original
-            return clone;
+            return (SDKManagerCLIBuilder) super.clone();
         } catch (CloneNotSupportedException e) {
             throw new AssertionError();
         }
@@ -99,7 +129,7 @@ public class SDKManagerCLIBuilder implements Cloneable {
         NAME, VERSION, LOCATION, AVAILABLE, DESCRIPTION, UNSUPPORTED
     }
 
-    static class ListPackagesParser implements CLICommand.OutputParser<SDKPackages> {
+    static class ListPackagesParser implements ChristelleCLICommand.OutputParser<SDKPackages> {
         @Override
         public SDKPackages parse(InputStream input) throws IOException {
             SDKPackages result = new SDKPackages();
