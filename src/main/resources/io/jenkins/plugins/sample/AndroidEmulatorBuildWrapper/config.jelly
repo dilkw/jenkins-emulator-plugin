@@ -1,0 +1,89 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:t="/lib/hudson">
+     <f:entry title="SDK Root" field="SDKRoot">
+            <f:textbox />
+    </f:entry>
+
+    <f:entry title="Build Tools" field="buildTools">
+        <f:textbox />
+    </f:entry>
+
+
+    <f:entry title="Configure The Specified SDK Tools" field="enableFeature">
+        <f:checkbox field="configTollsEnable"/>
+    </f:entry>
+
+    <!-- 使用 <div> 标签包裹 <f:section> 并添加 class 属性 -->
+    <div class="feature-config" style="display: none; width: 80%; margin-left: 20px; padding: 10px; border: 1px solid #ccc; border-radius:8px;" >
+        <f:entry title="SDK Manager" field="sdkManagerRoot">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="AVD Manager" field="avdManagerRoot">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="ADB Tool" field="adbToolRoot">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="Emulator Tool" field="emulatorToolRoot">
+            <f:textbox/>
+        </f:entry>
+
+    </div>
+
+    <script>
+        // Function to toggle the visibility of the feature config section
+        function toggleFeatureConfig() {
+            var enableFeature = document.querySelector('input[name="_.enableFeature"]');
+            var featureConfig = document.querySelector('.feature-config');
+
+            if (enableFeature) {
+                if(enableFeature.checked) {
+                    featureConfig.style.display = 'block';
+                }else {
+                    featureConfig.style.display = 'none';
+                }
+            }
+        }
+
+        // Ensure DOM is loaded before accessing elements
+        document.addEventListener('DOMContentLoaded', function() {
+            var enableFeature = document.querySelector('input[name="_.enableFeature"]');
+            if (enableFeature) {
+                enableFeature.addEventListener('change', toggleFeatureConfig);
+                // Initial call to set the correct state on page load
+                toggleFeatureConfig();
+            }
+        });
+    </script>
+
+    <f:entry title="Emulator Name" field="emulatorName">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="Android OS Version" field="androidOSVersion">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="Density" field="density">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="Resolution" field="resolution">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="Devide Locale" field="deviceLocale">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="Device SD Card Size" field="SDCardSize">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="Target ABI" field="targetABI">
+        <f:textbox />
+    </f:entry>
+</j:jelly>

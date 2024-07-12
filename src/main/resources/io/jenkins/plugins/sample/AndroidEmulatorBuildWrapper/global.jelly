@@ -1,0 +1,25 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+  <f:section title="${%Android}">
+
+    <f:entry title="${%Android SDK root}"
+        description="${%Enter the path to the root of an Android SDK installation}"
+        help="/plugin/dilkw/help-sdkRoot.html">
+      <input class="setting-input validated" name="christelle.androidHome"
+          type="text" value="${descriptor.androidHome}"
+          checkUrl="'buildWrapper/AndroidEmulatorBuildWrapper/checkAndroidHome?value='+escape(this.value)" />
+    </f:entry>
+
+    <f:entry help="/plugin/dilkw/help-installSdk.html">
+      <f:checkbox name="dilkw.shouldInstallSdk" checked="${descriptor.shouldInstallSdk}" />
+      <label class="attach-previous">${%Automatically install Android components when required}</label>
+    </f:entry>
+
+    <f:entry help="/plugin/dilkw/help-keepInWorkspace.html">
+      <f:checkbox name="dilkw.shouldKeepInWorkspace" checked="${descriptor.shouldKeepInWorkspace}" />
+      <label class="attach-previous">${%Keep emulators in the job workspace, in the .android subdirectory, to isolate them as much as possible}</label>
+    </f:entry>
+  </f:section>
+
+</j:jelly>
