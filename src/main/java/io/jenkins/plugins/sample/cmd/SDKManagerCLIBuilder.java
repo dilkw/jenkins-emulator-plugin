@@ -1,10 +1,7 @@
 package io.jenkins.plugins.sample.cmd;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import hudson.EnvVars;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.Util;
+import hudson.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.ArgumentListBuilder;
 import io.jenkins.plugins.sample.Constants;
@@ -24,12 +21,14 @@ import java.util.*;
 public class SDKManagerCLIBuilder implements Cloneable {
 
 
-    private final ArgumentListBuilder arguments;
+    private ArgumentListBuilder arguments;
     private FilePath executable;;
     private EnvVars env;
-    private FilePath root;
     private Channel channel = Channel.STABLE;
     private String sdkRoot;
+    private ProxyConfiguration proxy;
+
+    List<ChristelleCLICommand<Object>> christelleCLICommandList = new ArrayList<>();
 
     private static final String NO_PREFIX = "";
     private static final String ARG_OBSOLETE = "--include_obsolete";
@@ -43,9 +42,12 @@ public class SDKManagerCLIBuilder implements Cloneable {
     private static final String ARG_PROXY_PORT = "--proxy_port";
     private static final String ARG_PROXY_PROTOCOL = "--proxy";
 
-    public SDKManagerCLIBuilder() {
-        this.arguments = new ArgumentListBuilder();
-        this.arguments.add(Constants.SDK_MANAGER);
+    private SDKManagerCLIBuilder(String sdkRoot) {
+        this.sdkRoot = sdkRoot;
+    }
+
+    public static SDKManagerCLIBuilder withSDKRoot(String sdkRoot) {
+        return new SDKManagerCLIBuilder(sdkRoot);
     }
 
     public SDKManagerCLIBuilder command(@NonNull final FilePath executable) {
@@ -58,61 +60,58 @@ public class SDKManagerCLIBuilder implements Cloneable {
         return this;
     }
 
-    public SDKManagerCLIBuilder setSdkRoot(@NonNull final String sdkRoot) {
-        this.sdkRoot = sdkRoot;
-        return this;
-    }
-
     public SDKManagerCLIBuilder setChannel(@NonNull final Channel channel) {
         this.channel = channel;
         return this;
     }
 
-    public SDKManagerCLIBuilder installSDK(@NonNull final String androidAPIVersion, @NonNull final String ABI) {
-        // --install "platforms;android-30" "system-images;android-30;default;x86_64
-        arguments.add(" --install \"platforms;" + androidAPIVersion + " \"system-images;" + androidAPIVersion + ";default;" + ABI);
+    public SDKManagerCLIBuilder setProxy(ProxyConfiguration proxy) {
+        this.proxy = proxy;
         return this;
     }
 
+    public ChristelleCLICommand<Void> installSDK(@NonNull Collection<String> packages) {
+        // --install "platforms;android-30" "system-images;android-30;default;x86_64
+        //arguments.add(" --install \"platforms;" + androidAPIVersion + " \"system-images;" + androidAPIVersion + ";default;" + ABI);
+
+        return new ChristelleCLICommand<>(this.executable, this.arguments, this.env);
+
+    }
+
     public SDKManagerCLIBuilder addEnvironment(@NonNull EnvVars env) {
+        if (this.env == null) {
+            this.env = new EnvVars();
+        }
         this.env.putAll(env);
         return this;
     }
 
     public SDKManagerCLIBuilder addEnvironment(@NonNull String key, @NonNull String value) {
+        if (this.env == null) {
+            this.env = new EnvVars();
+        }
         this.env.put(key, value);
         return this;
     }
 
-    public SDKManagerCLIBuilder root(@NonNull final FilePath root) {
-        this.root = root;
-        return this;
-    }
-
-    private SDKManagerCLIBuilder setExe(final Launcher launcher) throws IOException, InterruptedException {
-        final VirtualChannel channel = launcher.getChannel();
-        if (channel == null) {
-            throw new IOException("Unable to get a channel for the launcher");
-        }
-        executable = new FilePath(channel, sdkRoot);
+    public SDKManagerCLIBuilder createExecutable(final Launcher launcher, FilePath workspace) throws InterruptedException, IOException {
+        String toolRoot = sdkRoot + Constants.CMD_TOOLS_BIN_DIR;
+        executable = Utils.createExecutable(launcher, workspace, toolRoot);
         return this;
     }
 
     public ChristelleCLICommand<Void> buildCommand() {
-        return new ChristelleCLICommand<Void>(executable, arguments, env, root);
+        return new ChristelleCLICommand<>(executable, arguments, env);
     }
 
     public ChristelleCLICommand<SDKPackages> list() {
         ListPackagesParser parser = new ListPackagesParser();
-        ChristelleCLICommand<SDKPackages> christelleCLICommand = new ChristelleCLICommand<>(executable, arguments, env, root);
+        ChristelleCLICommand<SDKPackages> christelleCLICommand = new ChristelleCLICommand<>(executable, arguments, env);
         return christelleCLICommand.withParser(parser);
     }
 
     public ChristelleCLICommand<Void> installSDK() throws Exception {
-        if (!root.exists()) {
-            root.mkdirs();
-        }
-        return new ChristelleCLICommand<Void>(executable, arguments, env, root);
+        return new ChristelleCLICommand<>(executable, arguments, env);
     }
 
     @Override

@@ -28,6 +28,7 @@ import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Node;
 import io.jenkins.plugins.sample.Messages;
+import io.jenkins.plugins.sample.sdk.DetectionFailedException;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,19 +59,19 @@ public enum Platform {
         return line.contains(name());
     }
 
-    public static Platform of(Node node) throws Exception {
+    public static Platform of(Node node) throws InterruptedException, IOException, DetectionFailedException {
         try {
             Computer computer = node.toComputer();
             if (computer == null) {
                 throw new Exception();
             }
             return detect(computer.getSystemProperties());
-        } catch (IOException | InterruptedException e) {
-            throw new Exception();
+        } catch (Exception e) {
+            throw new IOException();
         }
     }
 
-    public static Platform fromWorkspace(FilePath workspace) throws Exception {
+    public static Platform fromWorkspace(FilePath workspace)  throws InterruptedException, IOException {
         Computer computer = workspace.toComputer();
         if (computer == null) {
             throw new AbortException(Messages.NODE_NOT_AVAILABLE());
@@ -116,7 +117,7 @@ public enum Platform {
         if (arch.contains("mac")) {
             return OSX;
         }
-        throw new Exception(Messages.OS_UNSUPPORTED);
+        throw new Exception(Messages.OS_UNSUPPORTED());
     }
 
 }

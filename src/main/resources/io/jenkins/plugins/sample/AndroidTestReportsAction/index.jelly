@@ -1,0 +1,15 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+
+    <l:side-panel> 
+            <st:include page="sidepanel.jelly" it="${it.run}" optional="true" /> 
+        </l:side-panel>
+
+    <l:layout title="Greeting"> 
+        <l:main-panel>
+            <h2>HTML Test Report</h2>
+            <st:include page="${reportPath}/index.html"/>
+        </l:main-panel>
+    </l:layout>
+
+</j:jelly>
