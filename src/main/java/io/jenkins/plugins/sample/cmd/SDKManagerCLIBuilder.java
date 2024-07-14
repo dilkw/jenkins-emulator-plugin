@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.*;
 import hudson.remoting.VirtualChannel;
 import hudson.util.ArgumentListBuilder;
+import hudson.util.Secret;
 import io.jenkins.plugins.sample.Constants;
 import io.jenkins.plugins.sample.cmd.help.Channel;
 import io.jenkins.plugins.sample.cmd.help.Platform;
@@ -16,7 +17,10 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class SDKManagerCLIBuilder implements Cloneable {
 
@@ -27,6 +31,8 @@ public class SDKManagerCLIBuilder implements Cloneable {
     private Channel channel = Channel.STABLE;
     private String sdkRoot;
     private ProxyConfiguration proxy;
+    private boolean verbose;
+    private boolean obsolete;
 
     List<ChristelleCLICommand<Object>> christelleCLICommandList = new ArrayList<>();
 
@@ -70,10 +76,35 @@ public class SDKManagerCLIBuilder implements Cloneable {
         return this;
     }
 
-    public ChristelleCLICommand<Void> installSDK(@NonNull Collection<String> packages) {
-        // --install "platforms;android-30" "system-images;android-30;default;x86_64
-        //arguments.add(" --install \"platforms;" + androidAPIVersion + " \"system-images;" + androidAPIVersion + ";default;" + ABI);
+    public SDKManagerCLIBuilder setVerbose(boolean verbose) {
+        this.verbose = verbose;
+        return this;
+    }
 
+    public SDKManagerCLIBuilder setObsolete(boolean obsolete) {
+        this.obsolete = obsolete;
+        return this;
+    }
+
+    public ChristelleCLICommand<Void> installSDK(@NonNull Collection<String> packages) {
+        if (packages.isEmpty()) {
+            throw new IllegalArgumentException("At least a packge must be specified");
+        }
+
+        ArgumentListBuilder arguments = buildCommonOptions();
+
+        arguments.add(ARG_INSTALL);
+        for (String p : packages) {
+            arguments.addQuoted(p);
+        }
+
+        EnvVars env = new EnvVars();
+        try {
+            buildProxyEnvVars(env);
+        } catch (URISyntaxException e) {
+            // fallback to CLI arguments
+            buildProxyArguments(arguments);
+        }
         return new ChristelleCLICommand<>(this.executable, this.arguments, this.env);
 
     }
@@ -95,8 +126,7 @@ public class SDKManagerCLIBuilder implements Cloneable {
     }
 
     public SDKManagerCLIBuilder createExecutable(final Launcher launcher, FilePath workspace) throws InterruptedException, IOException {
-        String toolRoot = sdkRoot + Constants.CMD_TOOLS_BIN_DIR;
-        executable = Utils.createExecutable(launcher, workspace, toolRoot);
+        executable = Utils.createExecutable(launcher, workspace, sdkRoot, ToolsCommand.SDK_MANAGER);
         return this;
     }
 
@@ -105,13 +135,107 @@ public class SDKManagerCLIBuilder implements Cloneable {
     }
 
     public ChristelleCLICommand<SDKPackages> list() {
+
+        ArgumentListBuilder arguments = buildCommonOptions();
+
+        arguments.add(ARG_LIST);
+
+        EnvVars env = new EnvVars();
+        try {
+            buildProxyEnvVars(env);
+        } catch (URISyntaxException e) {
+            // fallback to CLI arguments
+            buildProxyArguments(arguments);
+        }
         ListPackagesParser parser = new ListPackagesParser();
         ChristelleCLICommand<SDKPackages> christelleCLICommand = new ChristelleCLICommand<>(executable, arguments, env);
         return christelleCLICommand.withParser(parser);
     }
 
-    public ChristelleCLICommand<Void> installSDK() throws Exception {
-        return new ChristelleCLICommand<>(executable, arguments, env);
+    private ArgumentListBuilder buildCommonOptions() {
+        ArgumentListBuilder arguments = new ArgumentListBuilder();
+
+        if (sdkRoot == null) {
+            sdkRoot = getSDKRoot();
+        }
+        // required
+        arguments.addKeyValuePair(NO_PREFIX, ARG_SDK_ROOT, quote(sdkRoot), false);
+
+        if (channel != null) {
+            arguments.addKeyValuePair(NO_PREFIX, ARG_CHANNEL, String.valueOf(channel.getValue()), false);
+        }
+
+        if (verbose) {
+            arguments.add(ARG_VERBOSE);
+        }
+
+        if (obsolete) {
+            arguments.add(ARG_OBSOLETE);
+        }
+        // arguments.add(ARG_FORCE_HTTP);
+
+        return arguments;
+    }
+
+    private void buildProxyEnvVars(EnvVars env) throws URISyntaxException {
+        if (proxy == null) {
+            // no proxy configured
+            return;
+        }
+
+        for (Pattern proxyPattern : proxy.getNoProxyHostPatterns()) {
+            if (proxyPattern.matcher("https://dl.google.com/android/repository").find()) {
+                // no proxy for google download repositories
+                return;
+            }
+        }
+
+        String userInfo = Util.fixEmptyAndTrim(proxy.getUserName());
+        // append password only if userName is defined
+        if (userInfo != null && StringUtils.isNotBlank(proxy.getSecretPassword().getEncryptedValue())) {
+            Secret secret = Secret.decrypt(proxy.getSecretPassword().getEncryptedValue());
+            if (secret != null) {
+                userInfo += ":" + Util.fixEmptyAndTrim(secret.getPlainText());
+            }
+        }
+
+        // ENV variables are used by
+        // com.android.sdklib.tool.sdkmanager.SdkManagerCliSettings
+        // actually authentication is not supported by the build tools !!!
+        String proxyURL = new URI("http", userInfo, proxy.name, proxy.port, null, null, null).toString();
+        env.put("HTTP_PROXY", proxyURL);
+        env.put("HTTPS_PROXY", proxyURL);
+    }
+
+    private void buildProxyArguments(ArgumentListBuilder arguments) {
+        if (proxy == null) {
+            // no proxy configured
+            return;
+        }
+
+        for (Pattern proxyPattern : proxy.getNoProxyHostPatterns()) {
+            if (proxyPattern.matcher("https://dl.google.com/android/repository").find()) {
+                // no proxy for google download repositories
+                return;
+            }
+        }
+
+        arguments.addKeyValuePair(NO_PREFIX, ARG_PROXY_PROTOCOL, "http", false);
+        arguments.addKeyValuePair(NO_PREFIX, ARG_PROXY_HOST, proxy.name, false);
+        if (proxy.port != -1) {
+            arguments.addKeyValuePair(NO_PREFIX, ARG_PROXY_PORT, String.valueOf(proxy.port), false);
+        }
+    }
+
+    private String getSDKRoot() {
+        return executable.getParent().getParent().getParent().getRemote();
+    }
+
+    private String quote(String quote) {
+        if (!StringUtils.isNotBlank(quote)) {
+            return "\"" + quote + "\"";
+        }
+        return quote;
     }
 
     @Override

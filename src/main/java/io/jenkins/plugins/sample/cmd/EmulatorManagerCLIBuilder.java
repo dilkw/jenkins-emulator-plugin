@@ -1,15 +1,16 @@
 package io.jenkins.plugins.sample.cmd;
 
-import hudson.EnvVars;
-import hudson.FilePath;
-import hudson.ProxyConfiguration;
-import hudson.Util;
+import hudson.*;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
 import io.jenkins.plugins.sample.Constants;
+import io.jenkins.plugins.sample.cmd.help.Platform;
+import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
+import io.jenkins.plugins.sample.cmd.help.Utils;
 import io.jenkins.plugins.sample.cmd.model.EmulatorConfig;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Locale;
@@ -77,6 +78,11 @@ public class EmulatorManagerCLIBuilder {
 
     EmulatorManagerCLIBuilder(String sdkRoot) {
         this.sdkRoot = sdkRoot;
+    }
+
+    public EmulatorManagerCLIBuilder createExecutable(final Launcher launcher, FilePath workspace) throws InterruptedException, IOException {
+        executable = Utils.createExecutable(launcher, workspace, sdkRoot, ToolsCommand.EMULATOR_MANAGER);
+        return this;
     }
 
     public EmulatorManagerCLIBuilder setEmulatorConfig(EmulatorConfig emulatorConfig) {

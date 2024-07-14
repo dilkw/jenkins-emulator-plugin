@@ -4,7 +4,8 @@ public enum ToolsCommand {
 
     SDK_MANAGER("sdkmanager", ".bat"),
     EMULATOR_MANAGER("emulator", ".bat"),
-    AVD_MANAGER("avdmanager", ".bat");
+    AVD_MANAGER("avdmanager", ".bat"),
+    ADB_MANAGER("adb", ".exe");
 
     private final String toolName;
     private final String windowsExtension;

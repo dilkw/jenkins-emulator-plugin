@@ -66,10 +66,11 @@ public class EmulatorRunner {
         ProxyConfiguration proxy = Jenkins.get().proxy;
 
         String avdHome = env.get(Constants.ENV_ANDROID_AVD_HOME);
-        String sdkRoot = env.get(Constants.ENV_ANDROID_SDK_HOME); // FIXME required!
+        String sdkRoot = env.get(Constants.ENV_VAR_ANDROID_SDK_ROOT); // FIXME required!
 
         // 通过 sdkmanager --list 获取已安装的 sdk 列表
         SDKPackages packages = SDKManagerCLIBuilder.withSDKRoot(sdkRoot)
+            .createExecutable(launcher, workspace)
             .setChannel(Channel.STABLE)
             .setProxy(proxy)
             .addEnvironment(env)
@@ -92,6 +93,7 @@ public class EmulatorRunner {
 
         // 查看已经存在的模拟器列表
         List<AVDevice> devices = AVDManagerCLIBuilder.withSdkRoot(sdkRoot)
+                .createExecutable(launcher, workspace)
                 .addEnv(env)
                 .silent(true)
                 .listAVD()
@@ -101,6 +103,7 @@ public class EmulatorRunner {
             listener.getLogger().println("Android Virtual Device " + config.getEmulatorName() + " already exist, removing...");
 
             AVDManagerCLIBuilder.withSdkRoot(sdkRoot)
+                    .createExecutable(launcher, workspace)
                     .addEnv(env)
                     .silent(true)
                     .deleteAVD(config.getEmulatorName())
@@ -112,6 +115,7 @@ public class EmulatorRunner {
                 + getSystemComponent());
 
         AVDManagerCLIBuilder.withSdkRoot(sdkRoot)
+                .createExecutable(launcher, workspace)
                 .addEnv(env)
                 .silent(true)
                 .packagePath(getSystemComponent())
@@ -123,6 +127,7 @@ public class EmulatorRunner {
 
         // start ADB service
         ADBManagerCLIBuilder.withSDKRoot(sdkRoot)
+                .createExecutable(launcher, workspace)
                 .addEnvVars(env) //
                 .setMaxEmulators(1) // FIXME set equals to the number of node executors
                 .setPort(config.getAdbServerPort()) //
@@ -131,6 +136,7 @@ public class EmulatorRunner {
 
         // start emulator
         EmulatorManagerCLIBuilder.withSdkRoot(sdkRoot)
+                .createExecutable(launcher, workspace)
                 .setEmulatorConfig(config)
                 .setMode(EmulatorManagerCLIBuilder.SNAPSHOT.NOT_PERSIST)
                 .start()

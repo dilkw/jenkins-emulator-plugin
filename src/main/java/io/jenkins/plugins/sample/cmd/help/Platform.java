@@ -59,7 +59,7 @@ public enum Platform {
         return line.contains(name());
     }
 
-    public static Platform of(Node node) throws InterruptedException, IOException, DetectionFailedException {
+    public static Platform of(Node node) throws DetectionFailedException {
         try {
             Computer computer = node.toComputer();
             if (computer == null) {
@@ -67,7 +67,7 @@ public enum Platform {
             }
             return detect(computer.getSystemProperties());
         } catch (Exception e) {
-            throw new IOException();
+            throw new DetectionFailedException(Messages.SystemTools_failureOnProperties(), e);
         }
     }
 
@@ -102,11 +102,11 @@ public enum Platform {
         return fromWorkspace(filePath);
     }
 
-    public static Platform currentPlatform() throws Exception {
+    public static Platform current() throws DetectionFailedException {
         return detect(System.getProperties());
     }
 
-    private static Platform detect(Map<Object, Object> systemProperties) throws Exception {
+    private static Platform detect(Map<Object, Object> systemProperties) throws DetectionFailedException {
         String arch = ((String) systemProperties.get("os.name")).toLowerCase(Locale.ENGLISH);
         if (arch.contains("linux")) {
             return LINUX;
@@ -117,7 +117,7 @@ public enum Platform {
         if (arch.contains("mac")) {
             return OSX;
         }
-        throw new Exception(Messages.OS_UNSUPPORTED());
+        throw new DetectionFailedException(Messages.Platform_unknown(arch));
     }
 
 }

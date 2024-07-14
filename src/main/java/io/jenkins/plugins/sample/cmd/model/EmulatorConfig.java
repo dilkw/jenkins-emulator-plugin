@@ -142,7 +142,7 @@ public class EmulatorConfig {
         if (ScreenDensity.valueOfDensity(density) == null) {
             errors.add(new ValidationError("screen density '" + density + "' not valid"));
         }
-        if (ScreenResolution.valueOfResolution(resolution) == null) {
+        if (ScreenResolution.valueOf(resolution) == null) {
             errors.add(new ValidationError("screen resolution '" + resolution + "' not valid"));
         }
         if (targetABI == null) {
@@ -178,6 +178,11 @@ public class EmulatorConfig {
         }
 
         public String getMessage() {
+            return message;
+        }
+
+        @Override
+        public String toString() {
             return message;
         }
     }

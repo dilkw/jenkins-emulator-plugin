@@ -1,7 +1,7 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:t="/lib/hudson">
      <f:entry title="SDK Root" field="SDKRoot">
-            <f:textbox />
+            <f:textbox/>
     </f:entry>
 
     <f:entry title="Build Tools" field="buildTools">

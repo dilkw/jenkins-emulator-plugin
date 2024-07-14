@@ -1,48 +1,33 @@
 package io.jenkins.plugins.sample.cmd.model;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Util;
 import io.jenkins.plugins.sample.Constants;
 
-public enum ScreenResolution {
+import java.io.Serializable;
 
-    QVGA(240, 320, "QVGA", "QVGA"),
-    WQVGA(240, 400, "WQVGA", "WQVGA400"),
-    FWQVGA(240, 432, "FWQVGA", "WQVGA432"),
-    HVGA(320, 480, "HVGA", "HVGA"),
-    WVGA(480, 800, "WVGA", "WVGA800"),
-    FWVGA(480, 854, "FWVGA", "WVGA854"),
-    WSVGA(1024, 654, "WSVGA", "WSVGA"),
-    WXGA_720(1280, 720, "WXGA720", "WXGA720"),
-    WXGA_800(1280, 800, "WXGA800", "WXGA800"),
-    WXGA(1280, 800, "WXGA", "WXGA");
+@SuppressWarnings("serial")
+public class ScreenResolution implements Serializable {
+    public static final ScreenResolution QVGA = new ScreenResolution(240, 320, "QVGA", "QVGA");
+    public static final ScreenResolution WQVGA = new ScreenResolution(240, 400, "WQVGA", "WQVGA400");
+    public static final ScreenResolution FWQVGA = new ScreenResolution(240, 432, "FWQVGA", "WQVGA432");
+    public static final ScreenResolution HVGA = new ScreenResolution(320, 480, "HVGA", "HVGA");
+    public static final ScreenResolution WVGA = new ScreenResolution(480, 800, "WVGA", "WVGA800");
+    public static final ScreenResolution FWVGA = new ScreenResolution(480, 854, "FWVGA", "WVGA854");
+    public static final ScreenResolution WSVGA = new ScreenResolution(1024, 654, "WSVGA", "WSVGA");
+    public static final ScreenResolution WXGA_720 = new ScreenResolution(1280, 720, "WXGA720", "WXGA720");
+    public static final ScreenResolution WXGA_800 = new ScreenResolution(1280, 800, "WXGA800", "WXGA800");
+    public static final ScreenResolution WXGA = new ScreenResolution(1280, 800, "WXGA", "WXGA");
+    private static final ScreenResolution[] PRESETS = new ScreenResolution[] { QVGA, WQVGA, FWQVGA, HVGA,
+            WVGA, FWVGA, WSVGA,
+            WXGA_720, WXGA_800, WXGA };
 
-
-    private static final ScreenResolution[] PRESETS = { QVGA, WQVGA, FWQVGA, HVGA,
-                                                                       WVGA, FWVGA, WSVGA,
-                                                                       WXGA_720, WXGA_800, WXGA };
-
-    private final int width;
-    private final int height;
-    private final String alias;
-    private final String skinName;
-
-    ScreenResolution(int width, int height, String alias, String skinName) {
-        this.width = width;
-        this.height = height;
-        this.alias = alias;
-        this.skinName = skinName;
+    @SuppressFBWarnings("MS_EXPOSE_REP")
+    public static ScreenResolution[] values() {
+        return PRESETS;
     }
 
-    public static ScreenResolution valueOf(int width, int height) {
-        for (ScreenResolution resolution : PRESETS) {
-            if (resolution.height == height && resolution.width == width) {
-                return resolution;
-            }
-        }
-        return null;
-    }
-
-    public static ScreenResolution valueOfResolution(String resolution) {
+    public static ScreenResolution valueOf(String resolution) {
         if (Util.fixEmptyAndTrim(resolution) == null) {
             return null;
         }
@@ -77,9 +62,20 @@ public enum ScreenResolution {
         }
 
         // Return custom value
-        return valueOf(width, height);
+        return new ScreenResolution(width, height);
     }
 
+    private final int width;
+    private final int height;
+    private final String alias;
+    private final String skinName;
+
+    private ScreenResolution(int width, int height, String alias, String skinName) {
+        this.width = width;
+        this.height = height;
+        this.alias = alias;
+        this.skinName = skinName;
+    }
 
     private ScreenResolution(int width, int height) {
         this(width, height, null, null);
@@ -106,7 +102,6 @@ public enum ScreenResolution {
         if (isCustomResolution()) {
             return getDimensionString();
         }
-
         return alias;
     }
 

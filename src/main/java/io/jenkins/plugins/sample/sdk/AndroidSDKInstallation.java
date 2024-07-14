@@ -36,11 +36,13 @@ import hudson.tools.ToolInstallation;
 import hudson.tools.ToolInstaller;
 import hudson.tools.ToolProperty;
 import io.jenkins.plugins.sample.Constants;
+import io.jenkins.plugins.sample.cmd.help.Channel;
 import io.jenkins.plugins.sample.cmd.help.Platform;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
+import io.jenkins.plugins.sample.Messages;
 
 import java.io.IOException;
 import java.util.Collections;

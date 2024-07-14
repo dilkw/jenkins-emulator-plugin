@@ -3,9 +3,13 @@ package io.jenkins.plugins.sample.cmd;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.FilePath;
+import hudson.Launcher;
 import hudson.Util;
 import hudson.util.ArgumentListBuilder;
 import io.jenkins.plugins.sample.Constants;
+import io.jenkins.plugins.sample.cmd.help.Platform;
+import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
+import io.jenkins.plugins.sample.cmd.help.Utils;
 import io.jenkins.plugins.sample.cmd.model.AVDevice;
 import io.jenkins.plugins.sample.cmd.model.EmulatorConfig;
 import io.jenkins.plugins.sample.cmd.model.Targets;
@@ -67,6 +71,11 @@ public class AVDManagerCLIBuilder implements Cloneable {
 
     public AVDManagerCLIBuilder device(String device) {
         this.device = device;
+        return this;
+    }
+
+    public AVDManagerCLIBuilder createExecutable(final Launcher launcher, FilePath workspace) throws InterruptedException, IOException {
+        executable = Utils.createExecutable(launcher, workspace, sdkRoot, ToolsCommand.AVD_MANAGER);
         return this;
     }
 
@@ -163,9 +172,13 @@ public class AVDManagerCLIBuilder implements Cloneable {
 
     public ChristelleCLICommand<List<AVDevice>> listAVD() {
         ArgumentListBuilder arguments = new ArgumentListBuilder();
+
         addGlobalOptions(arguments);
+
         // action
         arguments.add(ARG_LIST_AVD);
+
+        EnvVars env = new EnvVars();
         additionalEnv(env);
 
         return new ChristelleCLICommand<List<AVDevice>>(executable, arguments, env) //

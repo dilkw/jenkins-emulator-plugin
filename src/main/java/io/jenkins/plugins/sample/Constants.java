@@ -33,4 +33,9 @@ public interface Constants {
     String ENV_ADB_TRACE = "ADB_TRACE";
     String ENV_ADB_LOCAL_TRANSPORT_MAX_PORT = "ADB_LOCAL_TRANSPORT_MAX_PORT";
 
+    // android sdk
+    String DDMS_CONFIG = "ddms.cfg";
+    String LOCAL_REPO_CONFIG = "repositories.cfg";
+    String ANDROID_CACHE = ".android";
+
 }

@@ -135,6 +135,9 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper {
             descriptor = Jenkins.get().getDescriptorByType(DescriptorImpl.class);
         }
 
+        System.out.println("androidHome:" + SDKRoot);
+        initialEnvironment.put(Constants.ENV_VAR_ANDROID_SDK_ROOT, SDKRoot);
+
         try {
 
             final EnvVars env = initialEnvironment.overrideAll(context.getEnv());
@@ -161,13 +164,6 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper {
 
             EmulatorRunner emulatorRunner = new EmulatorRunner(config);
             emulatorRunner.run(workspace, listener, env);
-
-            System.out.println("initialEnvironment: " + initialEnvironment.toString());
-            String sdkRoot = initialEnvironment.get(Constants.ANDROID_SDK_ROOT);
-            ChristelleCLICommand<Void> cliCommand = SDKManagerCLIBuilder.withSDKRoot(sdkRoot)
-                    .addEnvironment(initialEnvironment)
-                    .buildCommand();
-            cliCommand.run();
 
         } catch (Exception e) {
             throw new RuntimeException(e);

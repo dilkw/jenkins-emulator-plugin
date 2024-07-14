@@ -25,12 +25,8 @@ package io.jenkins.plugins.sample.sdk;
 
 import java.io.IOException;
 
-/**
- * Indicates the failure to detect the OS.
- */
-@SuppressWarnings("serial")
 public final class DetectionFailedException extends IOException {
-    DetectionFailedException(String message) {
+    public DetectionFailedException(String message) {
         super(message);
     }
 

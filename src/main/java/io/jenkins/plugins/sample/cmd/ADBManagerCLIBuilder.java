@@ -5,6 +5,8 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.util.ArgumentListBuilder;
 import io.jenkins.plugins.sample.Constants;
+import io.jenkins.plugins.sample.cmd.help.Platform;
+import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
 import io.jenkins.plugins.sample.cmd.help.Utils;
 
 import java.io.IOException;
@@ -67,7 +69,6 @@ public class ADBManagerCLIBuilder {
     public ChristelleCLICommand<Void> start() {
         ArgumentListBuilder arguments = buildGlobalOptions();
         arguments.add(ARG_START_SERVER);
-
         return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());
     }
 
@@ -76,8 +77,8 @@ public class ADBManagerCLIBuilder {
     }
 
     public ADBManagerCLIBuilder createExecutable(final Launcher launcher, FilePath workspace) throws InterruptedException, IOException {
-        String toolRoot = sdkRoot + Constants.PLATFORM_TOOLS_DIR;
-        executable = Utils.createExecutable(launcher, workspace, toolRoot);
+        String toolRoot = Utils.mergerPath(Platform.fromWorkspace(workspace), sdkRoot, Constants.PLATFORM_TOOLS_DIR);
+        executable = Utils.createExecutable(launcher, workspace, toolRoot, ToolsCommand.ADB_MANAGER);
         return this;
     }
 

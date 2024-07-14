@@ -11,6 +11,7 @@ import hudson.util.ForkOutputStream;
 import hudson.util.StreamTaskListener;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.input.NullInputStream;
@@ -57,7 +58,7 @@ public class ChristelleCLICommand<R> extends hudson.cli.CLICommand {
                 .envs(env) //
                 .stdin(stdin) //
                 .pwd(root == null ? command.getParent() : root) //
-                .cmds(arguments) //
+                .cmds(arguments == null ? new ArgumentListBuilder() : arguments) //
                 .masks(arguments.toMaskArray());
         starter.stdout(output);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -85,7 +86,7 @@ public class ChristelleCLICommand<R> extends hudson.cli.CLICommand {
                 .envs(env) //
                 .stdin(stdin) //
                 .pwd(root == null ? command.getParent() : root) //
-                .cmds(arguments) //
+                .cmds(arguments == null ? new ArgumentListBuilder() : arguments) //
                 .masks(arguments.toMaskArray());
 
         if (output != null) {
