@@ -4,7 +4,6 @@ import hudson.*;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
 import io.jenkins.plugins.sample.Constants;
-import io.jenkins.plugins.sample.cmd.help.Platform;
 import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
 import io.jenkins.plugins.sample.cmd.help.Utils;
 import io.jenkins.plugins.sample.cmd.model.EmulatorConfig;
@@ -34,11 +33,12 @@ public class EmulatorManagerCLIBuilder {
     private CameraFront cameraFront;
     private CameraBack cameraBack;
     private SNAPSHOT mode;
-    private int memory;
+    private int memory = -1;
     private boolean wipe;
     private int consolePort;
     private Object adbPort;
     private ProxyConfiguration proxy;
+    private String dataDir;
 
     public enum SNAPSHOT {
         NONE("-no-snapshot"),
@@ -81,7 +81,7 @@ public class EmulatorManagerCLIBuilder {
     }
 
     public EmulatorManagerCLIBuilder createExecutable(final Launcher launcher, FilePath workspace) throws InterruptedException, IOException {
-        executable = Utils.createExecutable(launcher, workspace, sdkRoot, ToolsCommand.EMULATOR_MANAGER);
+        executable = Utils.createExecutable(launcher, workspace, sdkRoot, ToolsCommand.EMULATOR);
         return this;
     }
 
@@ -134,6 +134,11 @@ public class EmulatorManagerCLIBuilder {
         return this;
     }
 
+    public EmulatorManagerCLIBuilder setDataDir(String dataDir) {
+        this.dataDir = dataDir;
+        return this;
+    }
+
     public ChristelleCLICommand<Void> start() {
         if (emulatorConfig.getReportPort() < 5554) {
             throw new IllegalArgumentException("Emulator port must be greater or equals than 5554");
@@ -148,12 +153,18 @@ public class EmulatorManagerCLIBuilder {
 
         if (emulatorConfig.getDataDir() != null) {
             arguments.add("-datadir");
-            arguments.addQuoted(emulatorConfig.getDataDir());
+            arguments.addQuoted(dataDir);
         }
 
         arguments.add(mode.value);
-        arguments.add(cameraFront.key, cameraFront.value);
-        arguments.add(cameraBack.key, cameraBack.value);
+        if (cameraFront != null) {
+            arguments.add(cameraFront.key, cameraFront.value);
+        }
+
+        if (cameraBack != null) {
+            arguments.add(cameraBack.key, cameraBack.value);
+        }
+
 
         arguments.add(ARG_NO_AUDIO);
         env.put(Constants.ENV_VAR_QEMU_AUDIO_DRV, "none");

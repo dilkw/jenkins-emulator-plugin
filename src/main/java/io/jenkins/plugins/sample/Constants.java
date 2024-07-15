@@ -7,13 +7,15 @@ public interface Constants {
 
     String githubUrl = "https://github.com/jenkinsci/android-emulator-plugin.git\n";
 
-    String BUILD_TOOLS_DIR = "build-tools";
-    String EMULATOR_DIR = "emulator";
-    String PLATFORM_TOOLS_DIR = "platform-tools";
-    String PLATFORMS_DIR = "platforms";
-    String TOOLS_DIR = "tools";
-    String TOOLS_BIN_DIR = "tools/bin";
-    String CMD_TOOLS_BIN_DIR = "cmdline-tools/bin";
+    String DIR_BUILD_TOOLS = "build-tools";
+    String DIR_EMULATOR = "emulator";
+    String DIR_PLATFORM_TOOL = "platform-tools";
+    String DIR_PLATFORMS = "platforms";
+    String DIR_TOOLS = "tools";
+    String DIR_TOOLS_BIN = "tools/bin";
+    String DIR_CMDLINE_TOOLS_BIN = "cmdline-tools/bin";
+
+    String TOOL_ROOT_AVD = "tool-root";
 
     String ENV_ANDROID_SDK_HOME = "ANDROID_SDK_HOME";
     String ENV_ANDROID_AVD_HOME = "ANDROID_AVD_HOME";

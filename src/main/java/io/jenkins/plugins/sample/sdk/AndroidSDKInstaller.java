@@ -132,10 +132,11 @@ public class AndroidSDKInstaller extends DownloadFromUrlInstaller {
         String remoteSDKRoot = sdkRoot.getRemote();
         String androidHome = getSDKHome(sdkRoot).getRemote();
 
-        SDKPackages packages = SDKManagerCLIBuilder.withSDKRoot(sdkRoot.getRemote()) //
-                .setProxy(Jenkins.get().proxy) //
-                .setChannel(channel) //
-                .list() //
+        SDKPackages packages = SDKManagerCLIBuilder.withSDKRoot(sdkRoot.getRemote())
+                .createExecutableFormPlatform(sdkRoot.createLauncher(log), platform)
+                .setProxy(Jenkins.get().proxy)
+                .setChannel(channel)
+                .list()
                 //.withEnv(Constants.ENV_VAR_ANDROID_SDK_HOME, androidHome) //
                 .execute();
 
@@ -168,9 +169,10 @@ public class AndroidSDKInstaller extends DownloadFromUrlInstaller {
                     .findFirst().get().getId()));
 
             SDKManagerCLIBuilder.withSDKRoot(sdkRoot.getRemote()) //
+                    .createExecutableFormPlatform(sdkRoot.createLauncher(log), platform)
                     .setProxy(Jenkins.get().proxy) //
                     .setChannel(channel) //
-                    .addEnvironment(Constants.ENV_VAR_ANDROID_SDK_ROOT, androidHome)
+                    .addEnvVars(Constants.ENV_VAR_ANDROID_SDK_ROOT, androidHome)
                     .installSDK(components) //
                     .execute(log);
         }

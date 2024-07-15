@@ -1,5 +1,6 @@
 package io.jenkins.plugins.sample;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.*;
 import hudson.model.AbstractProject;
@@ -9,9 +10,6 @@ import hudson.tasks.BuildWrapperDescriptor;
 
 
 import hudson.util.FormValidation;
-import io.jenkins.plugins.sample.cmd.ADBManagerCLIBuilder;
-import io.jenkins.plugins.sample.cmd.ChristelleCLICommand;
-import io.jenkins.plugins.sample.cmd.SDKManagerCLIBuilder;
 import io.jenkins.plugins.sample.cmd.model.EmulatorConfig;
 import io.jenkins.plugins.sample.cmd.model.HardwareProperty;
 import jenkins.model.Jenkins;
@@ -32,28 +30,27 @@ import java.util.stream.Collectors;
 
 public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper {
 
-    private final boolean enableOptions;
-    private final String SDKRoot;
     private final String buildTools;
-    private final String emulatorName;
     private final String androidOSVersion;
     private final String density;
     private final String resolution;
-    private final String deviceDefinition;
-    private final String deviceLocale;
-    private final String SDCardSize;
-    private final String targetABI;
+    private String SDKRoot;
+    private String emulatorName;
+    private String deviceDefinition;
+    private String deviceLocale;
+    private String SDCardSize;
+    private String targetABI;
+    private int adbTimeout;
+    private boolean enableOptions;
+
     private List<HardwareProperty> hardwareProperties = new ArrayList<>();
 
-    private int adbTimeout;
-
-    private DescriptorImpl descriptor;
-
-    private boolean configTollsEnable;
+    private boolean configToolsEnable;
     private String sdkManagerRoot;
     private String avdManagerRoot;
     private String adbToolRoot;
     private String emulatorToolRoot;
+    private DescriptorImpl descriptor;
 
     public boolean isEnableOptions() {
         return enableOptions;
@@ -79,15 +76,17 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper {
     public String getDeviceLocale() {
         return deviceLocale;
     }
+    public String getDeviceDefinition() {
+        return deviceDefinition;
+    }
     public String getSDCardSize() {
         return SDCardSize;
     }
     public String getTargetABI() {
         return targetABI;
     }
-
-    public boolean isConfigTollsEnable() {
-        return configTollsEnable;
+    public boolean isConfigToolsEnable() {
+        return configToolsEnable;
     }
     public String getSdkManagerRoot() {
         return sdkManagerRoot;
@@ -102,29 +101,82 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper {
         return emulatorToolRoot;
     }
 
-    @DataBoundConstructor
-    public AndroidEmulatorBuildWrapper(
-            boolean enableOptions,
-            String SDKRoot,
-            String buildTools,
-            String emulatorName,
-            String androidOSVersion,
-            String density,
-            String resolution, String deviceDefinition,
-            String deviceLocale,
-            String SDCardSize,
-            String targetABI) {
-        this.enableOptions = enableOptions;
-        this.SDKRoot = SDKRoot;
-        this.buildTools = buildTools;
+    @DataBoundSetter
+    public void setAdbTimeout(int adbTimeout) {
+        this.adbTimeout = adbTimeout;
+    }
+
+    @DataBoundSetter
+    public void setDescriptor(DescriptorImpl descriptor) {
+        this.descriptor = descriptor;
+    }
+
+    @DataBoundSetter
+    public void setConfigToolsEnable(boolean configToolsEnable) {
+        this.configToolsEnable = configToolsEnable;
+    }
+
+    @DataBoundSetter
+    public void setSdkManagerRoot(String sdkManagerRoot) {
+        this.sdkManagerRoot = sdkManagerRoot;
+    }
+
+    @DataBoundSetter
+    public void setAvdManagerRoot(String avdManagerRoot) {
+        this.avdManagerRoot = avdManagerRoot;
+    }
+
+    @DataBoundSetter
+    public void setAdbToolRoot(String adbToolRoot) {
+        this.adbToolRoot = adbToolRoot;
+    }
+
+    @DataBoundSetter
+    public void setEmulatorToolRoot(String emulatorToolRoot) {
+        this.emulatorToolRoot = emulatorToolRoot;
+    }
+
+    @DataBoundSetter
+    public void setEmulatorName(String emulatorName) {
         this.emulatorName = emulatorName;
+    }
+
+    @DataBoundSetter
+    public void setSDKRoot(String SDKRoot) {
+        this.SDKRoot = SDKRoot;
+    }
+
+    @DataBoundSetter
+    public void setDeviceDefinition(String deviceDefinition) {
+        this.deviceDefinition = deviceDefinition;
+    }
+
+    @DataBoundSetter
+    public void setSDCardSize(String SDCardSize) {
+        this.SDCardSize = SDCardSize;
+    }
+
+    @DataBoundSetter
+    public void setDeviceLocale(String deviceLocale) {
+        this.deviceLocale = deviceLocale;
+    }
+
+    @DataBoundSetter
+    public void setTargetABI(String targetABI) {
+        this.targetABI = targetABI;
+    }
+
+    @DataBoundSetter
+    public void setEnableOptions(boolean enableOptions) {
+        this.enableOptions = enableOptions;
+    }
+
+    @DataBoundConstructor
+    public AndroidEmulatorBuildWrapper(@CheckForNull String buildTools, String androidOSVersion, String density, String resolution) {
+        this.buildTools = buildTools;
         this.androidOSVersion = androidOSVersion;
         this.density = density;
         this.resolution = resolution;
-        this.deviceDefinition = deviceDefinition;
-        this.deviceLocale = deviceLocale;
-        this.SDCardSize = SDCardSize;
-        this.targetABI = targetABI;
     }
 
 
@@ -135,9 +187,10 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper {
             descriptor = Jenkins.get().getDescriptorByType(DescriptorImpl.class);
         }
 
+        System.out.println("initialEnvironment" + initialEnvironment.toString());
         System.out.println("androidHome:" + SDKRoot);
         initialEnvironment.put(Constants.ENV_VAR_ANDROID_SDK_ROOT, SDKRoot);
-
+        buildEnvVars(workspace, initialEnvironment);
         try {
 
             final EnvVars env = initialEnvironment.overrideAll(context.getEnv());
@@ -182,6 +235,11 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper {
         boolean shouldInstallSdk;
         boolean shouldKeepInWorkspace;
 
+        public DescriptorImpl() {
+            super(AndroidEmulatorBuildWrapper.class);
+            load();
+        }
+
         @Override
         public boolean isApplicable(AbstractProject<?, ?> item) {
             return true;
@@ -214,6 +272,20 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper {
     public boolean checkFilePath(String pathString) {
         File file = new File(pathString);
         return file.exists();
+    }
+
+    public void buildEnvVars(@NonNull FilePath homeLocation, @CheckForNull EnvVars env) throws IOException, InterruptedException {
+        if (env == null) {
+            env = new EnvVars();
+        }
+        env.put(Constants.ENV_ANDROID_SDK_HOME, homeLocation.getRemote());
+
+        FilePath emulatorLocation = homeLocation.child(Constants.ANDROID_CACHE);
+        env.put(Constants.ENV_ANDROID_EMULATOR_HOME, emulatorLocation.getRemote());
+
+        FilePath avdPath = emulatorLocation.child("avd");
+        avdPath.mkdirs(); // ensure that this folder exists
+        env.put(Constants.ENV_ANDROID_AVD_HOME, avdPath.getRemote());
     }
 
     private static class EnvVarsAdapter extends EnvVars {

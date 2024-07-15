@@ -3,9 +3,17 @@ package io.jenkins.plugins.sample.cmd.help;
 public enum ToolsCommand {
 
     SDK_MANAGER("sdkmanager", ".bat"),
-    EMULATOR_MANAGER("emulator", ".bat"),
     AVD_MANAGER("avdmanager", ".bat"),
-    ADB_MANAGER("adb", ".exe");
+    EMULATOR("emulator", ".exe"),
+    ADB("adb", ".exe"),
+    ANDROID_LEGACY("android", ".bat"),
+    EMULATOR_ARM("emulator-arm", ".exe"),
+    EMULATOR_MIPS("emulator-mips", ".exe"),
+    EMULATOR_X86("emulator-x86", ".exe"),
+    EMULATOR64_ARM("emulator64-arm", ".exe"),
+    EMULATOR64_MIPS("emulator64-mips", ".exe"),
+    EMULATOR64_X86("emulator64-x86", ".exe"),
+    MKSDCARD("mksdcard", ".exe");
 
     private final String toolName;
     private final String windowsExtension;

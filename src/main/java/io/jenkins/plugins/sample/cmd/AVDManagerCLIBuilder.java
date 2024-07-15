@@ -155,7 +155,9 @@ public class AVDManagerCLIBuilder implements Cloneable {
     }
 
     public AVDManagerCLIBuilder addEnv(EnvVars env) {
-        if (env == null) new EnvVars();
+        if (this.env == null) {
+            this.env = new EnvVars();
+        }
         this.env.putAll(env);
         return this;
     }

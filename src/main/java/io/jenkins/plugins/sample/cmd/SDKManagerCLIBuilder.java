@@ -2,10 +2,8 @@ package io.jenkins.plugins.sample.cmd;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.*;
-import hudson.remoting.VirtualChannel;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
-import io.jenkins.plugins.sample.Constants;
 import io.jenkins.plugins.sample.cmd.help.Channel;
 import io.jenkins.plugins.sample.cmd.help.Platform;
 import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
@@ -105,11 +103,18 @@ public class SDKManagerCLIBuilder implements Cloneable {
             // fallback to CLI arguments
             buildProxyArguments(arguments);
         }
-        return new ChristelleCLICommand<>(this.executable, this.arguments, this.env);
+        return new ChristelleCLICommand<Void>(executable, arguments, env)
+                .withInput(
+                        StringUtils.repeat(
+                                "y",
+                                "\r\n",
+                                packages.size()
+                        )
+                );
 
     }
 
-    public SDKManagerCLIBuilder addEnvironment(@NonNull EnvVars env) {
+    public SDKManagerCLIBuilder addEnvVars(@NonNull EnvVars env) {
         if (this.env == null) {
             this.env = new EnvVars();
         }
@@ -117,7 +122,7 @@ public class SDKManagerCLIBuilder implements Cloneable {
         return this;
     }
 
-    public SDKManagerCLIBuilder addEnvironment(@NonNull String key, @NonNull String value) {
+    public SDKManagerCLIBuilder addEnvVars(@NonNull String key, @NonNull String value) {
         if (this.env == null) {
             this.env = new EnvVars();
         }
@@ -126,7 +131,12 @@ public class SDKManagerCLIBuilder implements Cloneable {
     }
 
     public SDKManagerCLIBuilder createExecutable(final Launcher launcher, FilePath workspace) throws InterruptedException, IOException {
-        executable = Utils.createExecutable(launcher, workspace, sdkRoot, ToolsCommand.SDK_MANAGER);
+        this.executable = Utils.createExecutable(launcher, workspace, sdkRoot, ToolsCommand.SDK_MANAGER);
+        return this;
+    }
+
+    public SDKManagerCLIBuilder createExecutableFormPlatform(final Launcher launcher, Platform platform) throws InterruptedException, IOException {
+        this.executable = Utils.createExecutable(launcher, platform, sdkRoot, ToolsCommand.SDK_MANAGER);
         return this;
     }
 
@@ -137,7 +147,6 @@ public class SDKManagerCLIBuilder implements Cloneable {
     public ChristelleCLICommand<SDKPackages> list() {
 
         ArgumentListBuilder arguments = buildCommonOptions();
-
         arguments.add(ARG_LIST);
 
         EnvVars env = new EnvVars();
@@ -148,13 +157,13 @@ public class SDKManagerCLIBuilder implements Cloneable {
             buildProxyArguments(arguments);
         }
         ListPackagesParser parser = new ListPackagesParser();
+        System.out.println("executable----" + executable.getRemote());
         ChristelleCLICommand<SDKPackages> christelleCLICommand = new ChristelleCLICommand<>(executable, arguments, env);
         return christelleCLICommand.withParser(parser);
     }
 
     private ArgumentListBuilder buildCommonOptions() {
         ArgumentListBuilder arguments = new ArgumentListBuilder();
-
         if (sdkRoot == null) {
             sdkRoot = getSDKRoot();
         }

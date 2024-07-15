@@ -17,7 +17,7 @@ import java.util.Map;
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.tools.ant.filters.StringInputStream;
 
-public class ChristelleCLICommand<R> extends hudson.cli.CLICommand {
+public class ChristelleCLICommand<R> {
     private final ArgumentListBuilder arguments;
     private final FilePath command;
     private final Map<String, String> env;
@@ -35,35 +35,15 @@ public class ChristelleCLICommand<R> extends hudson.cli.CLICommand {
         this.env = env;
     }
 
-    @Override
-    public String getShortDescription() {
-        return "";
-    }
-
-    @Override
-    public int run() throws IOException, InterruptedException {
-        execute();
-        return 0;
-    }
-
     public R execute() throws IOException, InterruptedException {
         return execute(new StreamTaskListener(OutputStream.nullOutputStream(), StandardCharsets.UTF_8));
     }
 
     public R execute(@NonNull TaskListener output) throws IOException, InterruptedException {
-        Launcher launcher = command.createLauncher(output);
-        launcher.isUnix();
-        Launcher.ProcStarter starter = launcher
-                .launch() //
-                .envs(env) //
-                .stdin(stdin) //
-                .pwd(root == null ? command.getParent() : root) //
-                .cmds(arguments == null ? new ArgumentListBuilder() : arguments) //
-                .masks(arguments.toMaskArray());
+        Launcher.ProcStarter starter = buildCommand(output);
         starter.stdout(output);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         if (parser != null) {
-            // clone output to make content available to the parser
             starter.stdout(new ForkOutputStream(output.getLogger(), baos));
         } else {
             starter.stdout(output);
@@ -82,18 +62,25 @@ public class ChristelleCLICommand<R> extends hudson.cli.CLICommand {
 
     public Proc executeAsync(@Nullable TaskListener output) throws IOException, InterruptedException {
         // command.createLauncher(output)
-        Launcher.ProcStarter starter = command.createLauncher(output).launch() //
-                .envs(env) //
-                .stdin(stdin) //
-                .pwd(root == null ? command.getParent() : root) //
-                .cmds(arguments == null ? new ArgumentListBuilder() : arguments) //
-                .masks(arguments.toMaskArray());
+
+        Launcher.ProcStarter starter = buildCommand(output);
 
         if (output != null) {
             starter.stdout(output);
         }
 
         return starter.start();
+    }
+
+    private Launcher.ProcStarter buildCommand(@Nullable TaskListener output) throws IOException, InterruptedException {
+        System.out.println("command = " + command.getRemote());
+        List<String> args = getArgumentsToList();
+        return command.createLauncher(output).launch() //
+                .envs(env) //
+                .stdin(stdin) //
+                .pwd(root == null ? command.getParent() : root) //
+                .cmds(args) //
+                .masks(getMasks(args.size()));
     }
 
     private boolean[] getMasks(final int size) {
@@ -103,6 +90,11 @@ public class ChristelleCLICommand<R> extends hudson.cli.CLICommand {
         return masks;
     }
 
+    private List<String> getArgumentsToList() {
+        List<String> argmentsList = this.arguments.toList();
+        argmentsList.add(0, command.getRemote());
+        return argmentsList;
+    }
 
     public ChristelleCLICommand<R> withParser(OutputParser<R> parser) {
         this.parser = parser;
@@ -118,7 +110,6 @@ public class ChristelleCLICommand<R> extends hudson.cli.CLICommand {
         this.stdin = new StringInputStream(input);
         return this;
     }
-
 
     public interface OutputParser<R> {
         R parse(InputStream input) throws IOException;

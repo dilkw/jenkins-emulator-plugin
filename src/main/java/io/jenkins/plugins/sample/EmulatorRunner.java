@@ -41,10 +41,7 @@ import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class EmulatorRunner {
 
@@ -68,16 +65,23 @@ public class EmulatorRunner {
         String avdHome = env.get(Constants.ENV_ANDROID_AVD_HOME);
         String sdkRoot = env.get(Constants.ENV_VAR_ANDROID_SDK_ROOT); // FIXME required!
 
+        if (avdHome == null && avdHome.isEmpty()) {
+            avdHome = sdkRoot + Constants.DIR_PLATFORMS;
+        }
+
         // 通过 sdkmanager --list 获取已安装的 sdk 列表
         SDKPackages packages = SDKManagerCLIBuilder.withSDKRoot(sdkRoot)
             .createExecutable(launcher, workspace)
             .setChannel(Channel.STABLE)
             .setProxy(proxy)
-            .addEnvironment(env)
+            .addEnvVars(env)
             .list()
             .execute();
         listener.getLogger().println("SDK Manager is reading installed components");
 
+        for (String s : getComponents()) {
+            System.out.println("package: " + s + "\n");
+        }
         // 在已安装列表中是否已存在用户所需要的版本，如 android-30
         Set<String> components = getComponents();
         packages.getInstalled().forEach(p -> components.remove(p.getId()));
@@ -85,7 +89,7 @@ public class EmulatorRunner {
             SDKManagerCLIBuilder.withSDKRoot(sdkRoot)
                     .createExecutable(launcher, workspace)
                     .setProxy(proxy)
-                    .addEnvironment(env)
+                    .addEnvVars(env)
                     .installSDK(components)
                     .execute();
             listener.getLogger().println("SDK Manager is installing " + StringUtils.join(components, ' '));
@@ -94,7 +98,6 @@ public class EmulatorRunner {
         // 查看已经存在的模拟器列表
         List<AVDevice> devices = AVDManagerCLIBuilder.withSdkRoot(sdkRoot)
                 .createExecutable(launcher, workspace)
-                .addEnv(env)
                 .silent(true)
                 .listAVD()
                 .execute();
@@ -104,7 +107,6 @@ public class EmulatorRunner {
 
             AVDManagerCLIBuilder.withSdkRoot(sdkRoot)
                     .createExecutable(launcher, workspace)
-                    .addEnv(env)
                     .silent(true)
                     .deleteAVD(config.getEmulatorName())
                     .execute();
@@ -116,7 +118,6 @@ public class EmulatorRunner {
 
         AVDManagerCLIBuilder.withSdkRoot(sdkRoot)
                 .createExecutable(launcher, workspace)
-                .addEnv(env)
                 .silent(true)
                 .packagePath(getSystemComponent())
                 .createAVD(config)
@@ -137,8 +138,11 @@ public class EmulatorRunner {
         // start emulator
         EmulatorManagerCLIBuilder.withSdkRoot(sdkRoot)
                 .createExecutable(launcher, workspace)
+                .setDataDir(avdHome)
                 .setEmulatorConfig(config)
                 .setMode(EmulatorManagerCLIBuilder.SNAPSHOT.NOT_PERSIST)
+                .setConsolePort(5554)
+                .setAdbPort(5555)
                 .start()
                 .executeAsync(listener);
 

@@ -1,38 +1,46 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:t="/lib/hudson">
-     <f:entry title="SDK Root" field="SDKRoot">
-            <f:textbox/>
+
+    <!-- sdk 安装路径，如 /var/android-sdk -->
+    <f:entry title="SDK Root">
+            <f:textbox field="SDKRoot"/>
     </f:entry>
 
-    <f:entry title="Build Tools" field="buildTools">
-        <f:textbox />
+    <!-- build tools目录 -->
+    <f:entry title="Build Tools">
+        <f:textbox field="buildTools"/>
     </f:entry>
 
-
+    <!-- 是否需要配置具体的 sdk 构建工具，如 pixel_6 -->
     <f:entry title="Configure The Specified SDK Tools" field="enableFeature">
         <f:checkbox field="configTollsEnable"/>
     </f:entry>
 
     <!-- 使用 <div> 标签包裹 <f:section> 并添加 class 属性 -->
     <div class="feature-config" style="display: none; width: 80%; margin-left: 20px; padding: 10px; border: 1px solid #ccc; border-radius:8px;" >
-        <f:entry title="SDK Manager" field="sdkManagerRoot">
-            <f:textbox/>
+        <!-- sdkmanager 工具目录 -->
+        <f:entry title="SDK Manager">
+            <f:textbox field="sdkManagerRoot"/>
         </f:entry>
 
-        <f:entry title="AVD Manager" field="avdManagerRoot">
-            <f:textbox/>
+        <!-- avdmanager 工具目录 -->
+        <f:entry title="AVD Manager">
+            <f:textbox field="avdManagerRoot"/>
         </f:entry>
 
-        <f:entry title="ADB Tool" field="adbToolRoot">
-            <f:textbox/>
+        <!-- adb 工具目录 -->
+        <f:entry title="ADB Tool">
+            <f:textbox field="adbToolRoot"/>
         </f:entry>
 
-        <f:entry title="Emulator Tool" field="emulatorToolRoot">
-            <f:textbox/>
+        <!-- emulator 工具目录 -->
+        <f:entry title="Emulator Tool">
+            <f:textbox field="emulatorToolRoot"/>
         </f:entry>
 
     </div>
 
+    <!-- 控制sdk具体工具配置面板的显示逻辑 -->
     <script>
         // Function to toggle the visibility of the feature config section
         function toggleFeatureConfig() {
@@ -59,31 +67,60 @@
         });
     </script>
 
-    <f:entry title="Emulator Name" field="emulatorName">
-        <f:textbox />
+    <!-- 模拟器名称，如 test_api29_emulator -->
+    <f:entry title="Emulator Name">
+        <f:textbox field="emulatorName"/>
     </f:entry>
 
-    <f:entry title="Android OS Version" field="androidOSVersion">
-        <f:textbox />
+    <!-- Android sdk api 版本，如 android-30 -->
+    <f:entry title="Android OS Version">
+        <f:textbox field="androidOSVersion"/>
     </f:entry>
 
-    <f:entry title="Density" field="density">
-        <f:textbox />
+    <!-- 屏幕像素密度，如 640 -->
+    <f:entry title="Density">
+        <f:textbox field="density"/>
     </f:entry>
 
-    <f:entry title="Resolution" field="resolution">
-        <f:textbox />
+    <!-- 屏幕分辨率，如 1080x1092 -->
+    <f:entry title="Resolution">
+        <f:textbox field="resolution"/>
     </f:entry>
 
-    <f:entry title="Devide Locale" field="deviceLocale">
-        <f:textbox />
+    <!-- 设备地区/语言，如 en-US -->
+    <f:entry title="Device Locale">
+        <f:textbox field="deviceLocale"/>
     </f:entry>
 
-    <f:entry title="Device SD Card Size" field="SDCardSize">
-        <f:textbox />
+    <!-- 设备型号，如 pixel_6 -->
+    <f:entry title="Device Definition" >
+        <f:textbox field="deviceDefinition"/>
     </f:entry>
 
-    <f:entry title="Target ABI" field="targetABI">
-        <f:textbox />
+    <!-- 模拟器 sd_card 存储大小，如 1024，单位MB -->
+    <f:entry title="Device SD Card Size" >
+        <f:textbox field="SDCardSize"/>
     </f:entry>
+
+    <!-- cpu指令集架构，如 x86_64 -->
+    <f:entry title="Target ABI">
+        <f:textbox field="targetABI"/>
+    </f:entry>
+
+    <f:entry title="${%hardwareProperties.title}" description="${%hardwareProperties.description}" field="hardwareProperties">
+        <f:repetableProperty field="hardwareProperties" add="${%Add custom hardware property...}">
+            <div align="right">
+                <f:repeatableDeleteButton />
+            </div>
+        </f:repetableProperty>
+    </f:entry>
+
+    <f:advanced title="${%options.title}">
+        <f:advanced>
+            <f:entry title="${%advanced.adbTimeout.title}" field="adbTimeout" description="${%advanced.adbTimeout.description}">
+                <f:number default="60" />
+            </f:entry>
+        </f:advanced>
+    </f:advanced>
+
 </j:jelly>
