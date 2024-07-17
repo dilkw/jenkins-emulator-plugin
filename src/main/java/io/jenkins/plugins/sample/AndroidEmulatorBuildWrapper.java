@@ -10,6 +10,7 @@ import hudson.tasks.BuildWrapperDescriptor;
 
 
 import hudson.util.FormValidation;
+import io.jenkins.plugins.sample.cmd.ADBManagerCLIBuilder;
 import io.jenkins.plugins.sample.cmd.model.EmulatorConfig;
 import io.jenkins.plugins.sample.cmd.model.HardwareProperty;
 import jenkins.model.Jenkins;
@@ -221,6 +222,22 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        //killServiceAfterBuild(context, initialEnvironment);
+    }
+
+    private void killServiceAfterBuild(Context context, EnvVars envVars) {
+        Disposer disposer = new Disposer() {
+            @Override
+            public void tearDown(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
+
+                ADBManagerCLIBuilder.withSDKRoot(sdkManagerRoot)
+                        .addEnvVars(envVars)
+                        .createExecutable(launcher, workspace)
+                        .killEmulatorByPort("5554");
+            }
+        };
+        context.setDisposer(disposer);
     }
 
     @DataBoundSetter

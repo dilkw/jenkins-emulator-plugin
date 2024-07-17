@@ -4,6 +4,7 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.util.ArgumentListBuilder;
+import io.jenkins.cli.shaded.org.apache.commons.lang.StringUtils;
 import io.jenkins.plugins.sample.Constants;
 import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
 import io.jenkins.plugins.sample.cmd.help.Utils;
@@ -17,6 +18,7 @@ public class ADBManagerCLIBuilder {
 
     private static final String ARG_START_SERVER = "start-server";
     private static final String ARG_KILL_SERVER = "kill-server";
+    private static final String ARG_KILL_EMULATOR = "emu kill";
 
     private String sdkRoot = "";
 
@@ -65,9 +67,49 @@ public class ADBManagerCLIBuilder {
         return this;
     }
 
+    // 启动 adb server
     public ChristelleCLICommand<Void> start() {
         ArgumentListBuilder arguments = buildGlobalOptions();
         arguments.add(ARG_START_SERVER);
+        return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());
+    }
+
+    // 停止 adb server
+    public ChristelleCLICommand<Void> stop() {
+        ArgumentListBuilder arguments = buildGlobalOptions();
+        arguments.add(ARG_KILL_SERVER);
+        return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());
+    }
+
+    // adb kill emulator eg: adb -s test_api29 emu kill
+    public ChristelleCLICommand<Void> killEmulatorByEmulatorName(String emulatorName) {
+        ArgumentListBuilder arguments = new ArgumentListBuilder();
+        if (serial != null) {
+            arguments.add("-s", emulatorName);
+        }
+        arguments.add(ARG_KILL_EMULATOR);
+        return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());
+    }
+    // adb kill emulator eg: adb -s emulator-5554 emu kill
+    public ChristelleCLICommand<Void> killEmulatorByPort(String...ports) {
+        ArgumentListBuilder arguments = new ArgumentListBuilder();
+        if (serial != null) {
+            String portString = ports.length > 0 ? ports[0] : "" + port;
+            if (ports.length > 1) {
+                StringUtils.join(ports, ",");
+            }
+            arguments.add("-s", "emulator-" + ports);
+        }
+        arguments.add(ARG_KILL_EMULATOR);
+        return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());
+    }
+
+    // adb devices list
+    public ChristelleCLICommand<Void> listEmulatorDevices() {
+        ArgumentListBuilder arguments = new ArgumentListBuilder();
+        if (serial != null) {
+            arguments.add("-s", serial);
+        }
         return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());
     }
 
