@@ -14,6 +14,7 @@ public interface Constants {
     String DIR_TOOLS = "tools";
     String DIR_TOOLS_BIN = "tools/bin";
     String DIR_CMDLINE_TOOLS_BIN = "cmdline-tools/bin";
+    String DIR_AVD_HOME = "~/.android";
 
     String TOOL_ROOT_AVD = "tool-root";
 

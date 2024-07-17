@@ -65,8 +65,8 @@ public class EmulatorRunner {
         String avdHome = env.get(Constants.ENV_ANDROID_AVD_HOME);
         String sdkRoot = env.get(Constants.ENV_VAR_ANDROID_SDK_ROOT); // FIXME required!
 
-        if (avdHome == null && avdHome.isEmpty()) {
-            avdHome = sdkRoot + Constants.DIR_PLATFORMS;
+        if (avdHome == null || avdHome.isEmpty()) {
+            avdHome = Constants.DIR_AVD_HOME;
         }
 
         // 通过 sdkmanager --list 获取已安装的 sdk 列表

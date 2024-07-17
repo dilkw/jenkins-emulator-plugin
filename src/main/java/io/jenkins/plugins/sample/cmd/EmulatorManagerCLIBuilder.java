@@ -200,6 +200,7 @@ public class EmulatorManagerCLIBuilder {
             arguments.add(ARG_REPORT_CONSOLE, "tcp:" + emulatorConfig.getReportPort() + ",max=" + emulatorConfig.getAdbConnectionTimeout());
         }
 
+        env.replace(Constants.ENV_VAR_ANDROID_SDK_ROOT, "E:\\command-line-android-sdk");
         return new ChristelleCLICommand<>(executable, arguments, env);
 
     }
