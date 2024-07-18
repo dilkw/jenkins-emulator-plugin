@@ -35,6 +35,15 @@ public class ChristelleCLICommand<R> {
         this.env = env;
     }
 
+    public static void executeWithArgument(Launcher launcher, String argument, TaskListener listener) throws IOException, InterruptedException {
+        Launcher.ProcStarter starter = launcher.launch();
+        if (listener != null) {
+            starter.stdout(listener);
+        }
+        starter.cmds(argument);
+        starter.start();
+    }
+
     public R execute() throws IOException, InterruptedException {
         return execute(new StreamTaskListener(OutputStream.nullOutputStream(), StandardCharsets.UTF_8));
     }
@@ -73,8 +82,14 @@ public class ChristelleCLICommand<R> {
     }
 
     private Launcher.ProcStarter buildCommand(@Nullable TaskListener output) throws IOException, InterruptedException {
-        System.out.println("command = " + command.getRemote());
         List<String> args = getArgumentsToList();
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String arg : args) {
+            stringBuilder.append(arg);
+        }
+        if (output != null) {
+            output.getLogger().println(stringBuilder);
+        }
         return command.createLauncher(output).launch() //
                 .envs(env) //
                 .stdin(stdin) //
@@ -94,6 +109,15 @@ public class ChristelleCLICommand<R> {
         List<String> argmentsList = this.arguments.toList();
         argmentsList.add(0, command.getRemote());
         return argmentsList;
+    }
+
+    private String getCommand() {
+        List<String> args = getArgumentsToList();
+        StringBuilder stringBuilder = new StringBuilder("Command: ");
+        for (String argument : args) {
+            stringBuilder.append(argument);
+        }
+        return stringBuilder.toString();
     }
 
     public ChristelleCLICommand<R> withParser(OutputParser<R> parser) {

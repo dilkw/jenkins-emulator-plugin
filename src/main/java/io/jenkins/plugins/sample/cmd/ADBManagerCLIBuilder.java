@@ -94,11 +94,13 @@ public class ADBManagerCLIBuilder {
     public ChristelleCLICommand<Void> killEmulatorByPort(String...ports) {
         ArgumentListBuilder arguments = new ArgumentListBuilder();
         if (serial != null) {
-            String portString = ports.length > 0 ? ports[0] : "" + port;
-            if (ports.length > 1) {
-                StringUtils.join(ports, ",");
+            if (ports.length > 0) {
+                StringBuilder argumentsBuilder = new StringBuilder("emulator-");
+                for (String port : ports) {
+                    argumentsBuilder.append("emulator-").append(port);
+                }
+                arguments.add("-s", argumentsBuilder.toString());
             }
-            arguments.add("-s", "emulator-" + ports);
         }
         arguments.add(ARG_KILL_EMULATOR);
         return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());

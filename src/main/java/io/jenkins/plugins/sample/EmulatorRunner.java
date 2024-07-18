@@ -143,7 +143,7 @@ public class EmulatorRunner {
                 .setMode(EmulatorManagerCLIBuilder.SNAPSHOT.NOT_PERSIST)
                 .setConsolePort(5554)
                 .setAdbPort(5555)
-                .start()
+                .start(listener)
                 .executeAsync(listener);
 
         Integer port = workspace.act(new ReceiveEmulatorPortTask(config.getReportPort(), config.getAdbConnectionTimeout()));

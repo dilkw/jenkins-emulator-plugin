@@ -1,15 +1,18 @@
 package io.jenkins.plugins.sample.cmd;
 
 import hudson.*;
+import hudson.model.TaskListener;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.Secret;
 import io.jenkins.plugins.sample.Constants;
 import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
 import io.jenkins.plugins.sample.cmd.help.Utils;
 import io.jenkins.plugins.sample.cmd.model.EmulatorConfig;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Locale;
@@ -71,6 +74,16 @@ public class EmulatorManagerCLIBuilder {
         private final String key;
         private final String value;
         CameraBack(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
+    public enum LibFile {
+        LIB_X11("libX11.so.6", "libx11-6");
+        private final String key;
+        private final String value;
+        LibFile(String key, String value) {
             this.key = key;
             this.value = value;
         }
@@ -139,7 +152,7 @@ public class EmulatorManagerCLIBuilder {
         return this;
     }
 
-    public ChristelleCLICommand<Void> start() {
+    public ChristelleCLICommand start(TaskListener listener) throws IOException, InterruptedException {
         if (emulatorConfig.getReportPort() < 5554) {
             throw new IllegalArgumentException("Emulator port must be greater or equals than 5554");
         }
@@ -201,7 +214,10 @@ public class EmulatorManagerCLIBuilder {
         }
 
         env.replace(Constants.ENV_VAR_ANDROID_SDK_ROOT, "E:\\command-line-android-sdk");
-        return new ChristelleCLICommand<>(executable, arguments, env);
+
+        LibNotFoundParser libNotFoundParser = new LibNotFoundParser(executable.createLauncher(listener));
+        return new ChristelleCLICommand<Void>(executable, arguments, env)
+                .withParser(libNotFoundParser);
 
     }
 
@@ -242,6 +258,34 @@ public class EmulatorManagerCLIBuilder {
         arguments.add(args);
 
         return new ChristelleCLICommand<>(executable, arguments, new EnvVars());
+    }
+
+    ///var/jenkins_home/android-sdk/emulator/emulator: error while loading shared libraries: libX11.so.6: cannot open shared object file: No such file or directory
+    static class LibNotFoundParser implements ChristelleCLICommand.OutputParser<Void>  {
+
+        Launcher launcher;
+
+        public LibNotFoundParser(Launcher launcher) {
+            this.launcher = launcher;
+        }
+
+        @Override
+        public Void parse(InputStream input) {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (String line : IOUtils.readLines(input, "UTF-8")) {
+                stringBuilder.append(line).append("\r\n");
+            }
+            String result = stringBuilder.toString();
+            if (result.contains(LibFile.LIB_X11.key)) {
+                try {
+                    String argument = "apt-get update && apt-get install -y " + LibFile.LIB_X11.value;
+                    ChristelleCLICommand.executeWithArgument(launcher, argument, null);
+                } catch (IOException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return null;
+        }
     }
 
 }
