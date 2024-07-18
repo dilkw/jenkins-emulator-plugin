@@ -18,7 +18,7 @@ public class Utils {
             case AVD_MANAGER:
             case SDK_MANAGER:
                 if (useLegacySdkStructure) {
-                    toolsHome = Constants.DIR_TOOLS;
+                    toolsHome = Constants.DIR_TOOLS_BIN;
                 }else {
                     toolsHome = Constants.DIR_CMDLINE_TOOLS_BIN;
                 }

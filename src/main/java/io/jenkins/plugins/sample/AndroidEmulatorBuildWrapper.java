@@ -227,10 +227,11 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper {
     }
 
     private void killServiceAfterBuild(Context context, EnvVars envVars) {
+        String sdkRoot = envVars.get(Constants.ANDROID_SDK_ROOT);
         Disposer disposer = new Disposer() {
             @Override
             public void tearDown(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
-                ADBManagerCLIBuilder.withSDKRoot(sdkManagerRoot)
+                ADBManagerCLIBuilder.withSDKRoot(sdkRoot)
                         .addEnvVars(envVars)
                         .createExecutable(launcher, workspace)
                         .killEmulatorByPort("5554")
