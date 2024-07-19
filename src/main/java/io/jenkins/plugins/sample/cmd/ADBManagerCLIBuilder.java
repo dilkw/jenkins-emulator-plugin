@@ -4,7 +4,6 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.util.ArgumentListBuilder;
-import io.jenkins.cli.shaded.org.apache.commons.lang.StringUtils;
 import io.jenkins.plugins.sample.Constants;
 import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
 import io.jenkins.plugins.sample.cmd.help.Utils;
@@ -24,7 +23,7 @@ public class ADBManagerCLIBuilder {
 
     private FilePath executable;
     private EnvVars env;
-    private ArgumentListBuilder args;
+    private ArgumentListBuilder argumentListBuilder;
     private String serial;
     private boolean trace = false;
     private int port = 5037;
@@ -93,15 +92,18 @@ public class ADBManagerCLIBuilder {
     // adb kill emulator eg: adb -s emulator-5554 emu kill
     public ChristelleCLICommand<Void> killEmulatorByPort(String...ports) {
         ArgumentListBuilder arguments = new ArgumentListBuilder();
-        if (serial != null) {
+//        if (serial != null) {
             if (ports.length > 0) {
-                StringBuilder argumentsBuilder = new StringBuilder("emulator-");
-                for (String port : ports) {
-                    argumentsBuilder.append("emulator-").append(port);
+                StringBuilder argumentsBuilder = new StringBuilder();
+                for (int i = 0; i < ports.length; i++) {
+                    argumentsBuilder.append("emulator-").append(ports[i]);
+                    if (i != ports.length - 1) {
+                        arguments.add(",");
+                    }
                 }
                 arguments.add("-s", argumentsBuilder.toString());
             }
-        }
+//        }
         arguments.add(ARG_KILL_EMULATOR);
         return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());
     }
@@ -109,9 +111,7 @@ public class ADBManagerCLIBuilder {
     // adb devices list
     public ChristelleCLICommand<Void> listEmulatorDevices() {
         ArgumentListBuilder arguments = new ArgumentListBuilder();
-        if (serial != null) {
-            arguments.add("-s", serial);
-        }
+        arguments.add("devices");
         return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());
     }
 
@@ -125,16 +125,12 @@ public class ADBManagerCLIBuilder {
     }
 
     public ChristelleCLICommand<Void> waitForDevice() {
-        return new ChristelleCLICommand<>(executable, args, env);
-    }
-
-    public ChristelleCLICommand<Void> buildCommand() {
-        return new ChristelleCLICommand<>(executable, args, env);
-    }
-
-    public ArgumentListBuilder getArguments() {
-        ArgumentListBuilder builder = new ArgumentListBuilder();
-        return builder;
+        ArgumentListBuilder args = new ArgumentListBuilder();
+        EnvVars envVars = buildEnvVars();
+        if (executable == null) {
+            return null;
+        }
+        return new ChristelleCLICommand<>(executable, args, envVars);
     }
 
     private ArgumentListBuilder buildGlobalOptions() {

@@ -38,8 +38,6 @@ public class EmulatorManagerCLIBuilder {
     private SNAPSHOT mode;
     private int memory = -1;
     private boolean wipe;
-    private int consolePort;
-    private Object adbPort;
     private ProxyConfiguration proxy;
     private String dataDir;
 
@@ -132,13 +130,13 @@ public class EmulatorManagerCLIBuilder {
         return this;
     }
 
-    public EmulatorManagerCLIBuilder setConsolePort(int consolePort) {
-        this.consolePort = consolePort;
+    public EmulatorManagerCLIBuilder setEmulatorConsolePort(int consolePort) {
+        emulatorConfig.setEmulatorConsolePort(consolePort);
         return this;
     }
 
-    public EmulatorManagerCLIBuilder setAdbPort(Object adbPort) {
-        this.adbPort = adbPort;
+    public EmulatorManagerCLIBuilder setEmulatorADBConnectPort(int adbPort) {
+        emulatorConfig.setEmulatorADBConnectPort(adbPort);
         return this;
     }
 
@@ -152,8 +150,8 @@ public class EmulatorManagerCLIBuilder {
         return this;
     }
 
-    public ChristelleCLICommand start(TaskListener listener) throws IOException, InterruptedException {
-        if (emulatorConfig.getReportPort() < 5554) {
+    public ChristelleCLICommand<Void> start(TaskListener listener) throws IOException, InterruptedException {
+        if (emulatorConfig.getEmulatorConsolePort() < 5554) {
             throw new IllegalArgumentException("Emulator port must be greater or equals than 5554");
         }
         EnvVars env = new EnvVars();
@@ -198,7 +196,7 @@ public class EmulatorManagerCLIBuilder {
         }
 
         // Network params
-        arguments.add(ARG_PORTS, consolePort + "," + adbPort);
+        arguments.add(ARG_PORTS, emulatorConfig.getEmulatorConsolePort() + "," + emulatorConfig.getEmulatorADBConnectPort());
 
         buildProxyArguments(arguments);
 
@@ -209,8 +207,8 @@ public class EmulatorManagerCLIBuilder {
         // UI params
         arguments.add(ARG_NO_BOOT_ANIM);
 
-        if (emulatorConfig.getReportPort() > 0) {
-            arguments.add(ARG_REPORT_CONSOLE, "tcp:" + emulatorConfig.getReportPort() + ",max=" + emulatorConfig.getAdbConnectionTimeout());
+        if (emulatorConfig.getEmulatorReportConsolePort() > 0) {
+            arguments.add(ARG_REPORT_CONSOLE, "tcp:" + emulatorConfig.getEmulatorReportConsolePort() + ",max=" + emulatorConfig.getEmulatorConnectToAdbTimeout());
         }
 
         env.replace(Constants.ENV_VAR_ANDROID_SDK_ROOT, "E:\\command-line-android-sdk");
@@ -218,7 +216,6 @@ public class EmulatorManagerCLIBuilder {
         LibNotFoundParser libNotFoundParser = new LibNotFoundParser(executable.createLauncher(listener));
         return new ChristelleCLICommand<Void>(executable, arguments, env)
                 .withParser(libNotFoundParser);
-
     }
 
     private void buildProxyArguments(ArgumentListBuilder arguments) {

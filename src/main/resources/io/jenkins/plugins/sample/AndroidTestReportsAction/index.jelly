@@ -1,14 +1,16 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
-
-    <l:side-panel> 
-            <st:include page="sidepanel.jelly" it="${it.run}" optional="true" /> 
+    <l:layout title="Android Test Report">
+        <l:side-panel>
+            <st:include page="sidepanel.jelly" it="${it.run}" optional="true" />
         </l:side-panel>
-
-    <l:layout title="Greeting"> 
         <l:main-panel>
             <h2>HTML Test Report</h2>
-            <st:include page="${reportPath}/index.html"/>
+            <p>Full path: ${rootURL}/${it.reportPath}/index.html</p>
+            <div>
+                <!-- <st:include page="${it.reportPath}"/> -->
+                <st:include page="${it.reportPath}/index.html"/>
+            </div>
         </l:main-panel>
     </l:layout>
 

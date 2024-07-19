@@ -49,20 +49,16 @@ public class AndroidSDKInstaller extends DownloadFromUrlInstaller {
         }
 
         @Override
-        public NodeSpecificInstallable forNode(Node node, TaskListener log) throws IOException, InterruptedException {
+        public NodeSpecificInstallable forNode(@NonNull Node node, TaskListener log) throws IOException, InterruptedException {
             if (url == null) {
                 throw new IllegalStateException("Installable " + name + " does not have a valid URL");
             }
 
             platform = Platform.of(node);
             String osName = platform.name().toLowerCase();
-            switch (platform) {
-            case WINDOWS:
+            // leave default
+            if (platform == Platform.WINDOWS) {
                 osName = id.startsWith("cmdline-tools") ? "win" : osName;
-                break;
-            default:
-                // leave default
-                break;
             }
             url = url.replace("{os}", osName);
 
@@ -124,20 +120,14 @@ public class AndroidSDKInstaller extends DownloadFromUrlInstaller {
     }
 
     private void installBasePackages(FilePath sdkRoot, TaskListener log) throws IOException, InterruptedException {
-        FilePath sdkmanager = sdkRoot.child("tools").child("bin").child("sdkmanager" + platform.extension);
-        if (!sdkmanager.exists()) {
-            sdkmanager = sdkRoot.child("cmdline-tools").child("bin").child("sdkmanager" + platform.extension);
-        }
-
-        String remoteSDKRoot = sdkRoot.getRemote();
         String androidHome = getSDKHome(sdkRoot).getRemote();
 
         SDKPackages packages = SDKManagerCLIBuilder.withSDKRoot(sdkRoot.getRemote())
                 .createExecutableFormPlatform(sdkRoot.createLauncher(log), platform)
+                .addEnvVars(Constants.ENV_VAR_ANDROID_SDK_HOME, androidHome)
                 .setProxy(Jenkins.get().proxy)
                 .setChannel(channel)
                 .list()
-                //.withEnv(Constants.ENV_VAR_ANDROID_SDK_HOME, androidHome) //
                 .execute();
 
         // remove components already installed
@@ -195,6 +185,7 @@ public class AndroidSDKInstaller extends DownloadFromUrlInstaller {
             return toolType == AndroidSDKInstallation.class;
         }
 
+        @NonNull
         @Override
         public String getDisplayName() {
             return Messages.AndroidSDKInstaller_displayName();

@@ -1,13 +1,17 @@
 package io.jenkins.plugins.sample.cmd.help;
 
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.Util;
 import hudson.remoting.VirtualChannel;
 import io.jenkins.cli.shaded.org.apache.commons.lang.StringUtils;
 import io.jenkins.plugins.sample.Constants;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Utils {
 
@@ -86,6 +90,22 @@ public class Utils {
             System.out.println("is Windows" + newPath);
         }
         return newPath;
+    }
+
+
+    public static String expandVariables(EnvVars envVars, Map<String,String> buildVars,
+                                         String token) {
+        final Map<String,String> vars = new HashMap<String,String>(envVars);
+        if (buildVars != null) {
+            // Build-specific variables, if any, take priority over environment variables
+            vars.putAll(buildVars);
+        }
+
+        String result = Util.fixEmptyAndTrim(token);
+        if (result != null) {
+            result = Util.replaceMacro(result, vars);
+        }
+        return Util.fixEmptyAndTrim(result);
     }
 
 }

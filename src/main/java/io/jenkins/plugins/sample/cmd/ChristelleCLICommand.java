@@ -83,9 +83,9 @@ public class ChristelleCLICommand<R> {
 
     private Launcher.ProcStarter buildCommand(@Nullable TaskListener output) throws IOException, InterruptedException {
         List<String> args = getArgumentsToList();
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder("Command:");
         for (String arg : args) {
-            stringBuilder.append(arg);
+            stringBuilder.append(" ").append(arg);
         }
         if (output != null) {
             output.getLogger().println(stringBuilder);

@@ -7,7 +7,6 @@ import hudson.Launcher;
 import hudson.Util;
 import hudson.util.ArgumentListBuilder;
 import io.jenkins.plugins.sample.Constants;
-import io.jenkins.plugins.sample.cmd.help.Platform;
 import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
 import io.jenkins.plugins.sample.cmd.help.Utils;
 import io.jenkins.plugins.sample.cmd.model.AVDevice;
@@ -29,7 +28,7 @@ public class AVDManagerCLIBuilder implements Cloneable {
     private final String ARG_AVD_NAME = "-n";
     // AVD sdk 包 id eg: -k "system-images;android-25;google_apis;x86"
     private final String ARG_AVD_SDK_ID = "-k";
-    // AVD sd-card 映射路径 eg: -c path/to/sdcard/ 或 -c 1000M 或 -c path/to/sdcard/ | -c 1000M
+    // -c {path|size}：此 AVD 的 SD 卡映像的路径，或要为此 AVD 创建的新 SD 卡映像的大小（以 KB 或 MB 为单位，分别以 K 或 M 表示）例如，-c path/to/sdcard/ 或 -c 1000M
     private final String ARG_AVD_SDCARD_MAPPING = "-c";
     // AVD 的文件的目录所在位置的路径，未指定路径，则系统会在 ~/.android/avd/ 中创建 AVD，eg: -p /var
     private final String ARG_AVD_FILE_ROOT = "-p";
@@ -55,10 +54,10 @@ public class AVDManagerCLIBuilder implements Cloneable {
     private EnvVars env;
     private final String sdkRoot;
     private boolean silent;
-    boolean verbose;
+    private boolean verbose;
     private String packagePath;
     private String device;
-    private String sdkCardRoot;
+    private String sdCardRoot;
 
 
     public AVDManagerCLIBuilder(String sdkRoot) {
@@ -104,8 +103,8 @@ public class AVDManagerCLIBuilder implements Cloneable {
         if (emulatorConfig.getTargetABI() != null) {
             arguments.add(ARG_ABI, emulatorConfig.getTargetABI());
         }
-        if (sdkCardRoot != null && !sdkCardRoot.isEmpty()) {
-            arguments.add(ARG_SDCARD, sdkCardRoot);
+        if (sdCardRoot != null && !sdCardRoot.isEmpty()) {
+            arguments.add(ARG_SDCARD, sdCardRoot);
         }
         arguments.add(ARG_FORCE);
 
@@ -167,8 +166,8 @@ public class AVDManagerCLIBuilder implements Cloneable {
         return this;
     }
 
-    public AVDManagerCLIBuilder setSdkCardRoot(String sdkCardRoot) {
-        this.sdkCardRoot = sdkCardRoot;
+    public AVDManagerCLIBuilder setSdCardRoot(String sdCardRoot) {
+        this.sdCardRoot = sdCardRoot;
         return this;
     }
 

@@ -6,6 +6,8 @@ import jenkins.model.RunAction2;
 public class AndroidTestReportsAction implements RunAction2 {
 
     private String reportPath;
+    private String name;
+    private String testResultsPath;
 
     public String getReportPath() {
         return reportPath;
@@ -18,6 +20,13 @@ public class AndroidTestReportsAction implements RunAction2 {
     @SuppressWarnings("rawtypes")
     private transient Run run;
 
+
+    public AndroidTestReportsAction(Run<?, ?> run, String archiveSourceRoot) {
+        this.run = run;
+        this.reportPath = archiveSourceRoot;
+        this.testResultsPath = archiveSourceRoot;
+        //"app/build/reports/androidTests/connected/debug/index.html";
+    }
     @Override
     public void onAttached(Run<?, ?> run) {
         this.run = run;
@@ -33,10 +42,6 @@ public class AndroidTestReportsAction implements RunAction2 {
         return run;
     }
 
-    public AndroidTestReportsAction(String reportPath) {
-        this.reportPath = reportPath;
-    }
-
     @Override
     public String getDisplayName() {
         return "Test Report";
@@ -44,11 +49,31 @@ public class AndroidTestReportsAction implements RunAction2 {
 
     @Override
     public String getIconFileName() {
-        return "/plugin/christelle/images/icon_test_report.png";
+        return "/plugin/dilkw/images/icon_test_report.png";
     }
 
     @Override
     public String getUrlName() {
         return "greeting";
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getTestResultsPath() {
+        return testResultsPath;
+    }
+
+    public void setTestResultsPath(String testResultsPath) {
+        this.testResultsPath = testResultsPath;
+    }
+
+    public void setRun(Run run) {
+        this.run = run;
     }
 }

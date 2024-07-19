@@ -60,6 +60,9 @@ public class SDKManagerCLIBuilder implements Cloneable {
     }
 
     public SDKManagerCLIBuilder addArgument(@NonNull String arg) {
+        if (arguments == null) {
+            arguments = new ArgumentListBuilder();
+        }
         this.arguments.add(arg);
         return this;
     }
