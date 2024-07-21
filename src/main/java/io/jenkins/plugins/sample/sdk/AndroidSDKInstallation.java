@@ -66,7 +66,7 @@ public class AndroidSDKInstallation extends ToolInstallation implements Environm
 
     @Override
     public AndroidSDKInstallation forEnvironment(EnvVars environment) {
-        String home = "";
+        String home;
         if (getHome() == null || getHome().isEmpty()) {
             home = environment.get(Constants.ENV_VAR_ANDROID_SDK_ROOT);
         }else {

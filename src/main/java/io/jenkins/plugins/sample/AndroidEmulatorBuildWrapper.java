@@ -10,7 +10,12 @@ import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.FormValidation;
 import io.jenkins.plugins.sample.cmd.ADBManagerCLIBuilder;
+import io.jenkins.plugins.sample.cmd.ChristelleCLICommand;
+import io.jenkins.plugins.sample.cmd.help.Platform;
+import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
 import io.jenkins.plugins.sample.cmd.help.Utils;
+import io.jenkins.plugins.sample.cmd.model.ADBDevice;
+import io.jenkins.plugins.sample.cmd.model.AndroidEmulatorShareDataAction;
 import io.jenkins.plugins.sample.cmd.model.EmulatorConfig;
 import io.jenkins.plugins.sample.cmd.model.HardwareProperty;
 import jenkins.model.Jenkins;
@@ -27,6 +32,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -186,9 +192,9 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper{
     }
 
 
+    EmulatorConfig config;
     @Override
     public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
-
         if (descriptor == null) {
             descriptor = Jenkins.get().getDescriptorByType(DescriptorImpl.class);
         }
@@ -200,7 +206,7 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper{
         try {
 
             final EnvVars env = initialEnvironment.overrideAll(context.getEnv());
-            EmulatorConfig config = new EmulatorConfig();
+            config = new EmulatorConfig();
             config.setAvdAndroidAPI(Util.replaceMacro(androidOSVersion, env));
             config.setDensity(Util.replaceMacro(density, env));
             config.setResolution(Util.replaceMacro(resolution, env));
@@ -215,6 +221,8 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper{
             config.setEmulatorConnectToAdbTimeout(adbTimeout * 1000);
             config.setEmulatorReportConsolePort(55000);
 
+            build.addAction(new AndroidEmulatorShareDataAction(config.getEmulatorConsolePort()));
+
             // validate input
             Collection<EmulatorConfig.ValidationError> errors = config.validate();
             if (!errors.isEmpty()) {
@@ -228,7 +236,7 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper{
             throw new RuntimeException(e);
         }
 
-        killServiceAfterBuild(context, initialEnvironment);
+        //killServiceAfterBuild(context, initialEnvironment);
     }
 
     private void killServiceAfterBuild(Context context, EnvVars envVars) {
@@ -236,11 +244,11 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper{
         Disposer disposer = new Disposer() {
             @Override
             public void tearDown(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
-//                ADBManagerCLIBuilder.withSDKRoot(sdkRoot)
-//                        .addEnvVars(envVars)
-//                        .createExecutable(launcher, workspace)
-//                        .killEmulatorByPort("5554")
-//                        .execute();
+                ADBManagerCLIBuilder.withSDKRoot(sdkRoot)
+                        .addEnvVars(envVars)
+                        .createExecutable(launcher, workspace)
+                        .killEmulatorByPort("5554")
+                        .execute();
                 listener.getLogger().println("killServiceAfterBuild tearDown");
             }
         };
@@ -290,11 +298,11 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper{
             public Proc launch(ProcStarter starter) throws IOException {
                 List<String> args = starter.cmds();
                 listener.getLogger().println("Intercepting command: " + args.toString());
-
                 // Modify the command if needed
                 if (args.toString().contains("gradlew")) {
                     try {
-                        waitForEmulatorToBeReady("emulator-5554", listener);
+                        FilePath workspace = Utils.getFilePath(channel, isUnix(), getSDKRoot(), ToolsCommand.ADB);
+                        waitForEmulatorToBeReady(config.getEmulatorConsolePort(), launcher, workspace, listener);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
@@ -307,39 +315,42 @@ public class AndroidEmulatorBuildWrapper extends SimpleBuildWrapper{
         };
     }
 
-    private void waitForEmulatorToBeReady(String emulatorName, TaskListener listener) throws InterruptedException, IOException {
+    private void waitForEmulatorToBeReady(int emulatorConsolePort, Launcher launcher, FilePath workspace, TaskListener listener) throws InterruptedException, IOException {
         int maxAttempts = 30;
         int attempt = 0;
         boolean isBooted = false;
         boolean isDeviceOnline = false;
         listener.getLogger().println("waitForEmulatorToBeReady:");
 
+        // EM
+        String emulatorName = Constants.EMULATOR_NAME_PREFIX + emulatorConsolePort;
+
+        ADBManagerCLIBuilder adbManagerCLIBuilder = ADBManagerCLIBuilder
+                .withSDKRoot(SDKRoot)
+                .setSerial(emulatorName)
+                .createExecutable(launcher, workspace);
+        ChristelleCLICommand<Boolean> emulatorIsBooted = adbManagerCLIBuilder.emulatorIsBooted();
+        ChristelleCLICommand<List<ADBDevice>> christelleCLICommand = adbManagerCLIBuilder.listEmulatorDevices();
+
         while (attempt < maxAttempts && (!isBooted || !isDeviceOnline)) {
             // Check if emulator is booted
-            Process process = Runtime.getRuntime().exec("adb -s " + emulatorName + " shell getprop sys.boot_completed");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line = reader.readLine();
-            if (line != null && line.trim().equals("1")) {
+            if (emulatorIsBooted.execute(listener)) {
                 isBooted = true;
             }
-
             // Check if emulator is online
-            process = Runtime.getRuntime().exec("adb devices");
-            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String devicesOutput;
-            while ((devicesOutput = reader.readLine()) != null) {
-                if (devicesOutput.contains(emulatorName) && devicesOutput.contains("device")) {
+            List<ADBDevice> adbDeviceList =christelleCLICommand.execute();
+            for (ADBDevice adbDevice : adbDeviceList) {
+                if (adbDevice.getEmulatorName().equals(emulatorName) && adbDevice.getStatus().equals("device")) {
                     isDeviceOnline = true;
+                    break;
                 }
             }
-
             if (!isBooted || !isDeviceOnline) {
-                Thread.sleep(5000); // Wait for 5 seconds before next check
+                Thread.sleep(3000); // Wait for 5 seconds before next check
                 attempt++;
             }
             listener.getLogger().println("......");
         }
-
         listener.getLogger().println("Emulator had Ready !!!");
         if (!isBooted || !isDeviceOnline) {
             throw new IOException("Emulator did not start or connect to ADB in the given time.");

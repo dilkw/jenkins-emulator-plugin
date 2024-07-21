@@ -32,8 +32,6 @@ public class SDKManagerCLIBuilder implements Cloneable {
     private boolean verbose;
     private boolean obsolete;
 
-    List<ChristelleCLICommand<Object>> christelleCLICommandList = new ArrayList<>();
-
     private static final String NO_PREFIX = "";
     private static final String ARG_OBSOLETE = "--include_obsolete";
     private static final String ARG_VERBOSE = "--verbose";
@@ -240,7 +238,7 @@ public class SDKManagerCLIBuilder implements Cloneable {
     }
 
     private String getSDKRoot() {
-        return executable.getParent().getParent().getParent().getRemote();
+        return Objects.requireNonNull(Objects.requireNonNull(Objects.requireNonNull(executable.getParent()).getParent()).getParent()).getRemote();
     }
 
     private String quote(String quote) {

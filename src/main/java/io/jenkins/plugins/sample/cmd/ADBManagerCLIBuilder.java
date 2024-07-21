@@ -3,15 +3,24 @@ package io.jenkins.plugins.sample.cmd;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.Util;
 import hudson.util.ArgumentListBuilder;
+import io.jenkins.cli.shaded.org.apache.commons.lang.StringUtils;
 import io.jenkins.plugins.sample.Constants;
 import io.jenkins.plugins.sample.cmd.help.ToolsCommand;
 import io.jenkins.plugins.sample.cmd.help.Utils;
+import io.jenkins.plugins.sample.cmd.model.ADBDevice;
+import org.apache.commons.io.IOUtils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringTokenizer;
 
 public class ADBManagerCLIBuilder {
 
@@ -75,8 +84,7 @@ public class ADBManagerCLIBuilder {
 
     // 停止 adb server
     public ChristelleCLICommand<Void> stop() {
-        ArgumentListBuilder arguments = buildGlobalOptions();
-        arguments.add(ARG_KILL_SERVER);
+        ArgumentListBuilder arguments = new ArgumentListBuilder(ARG_KILL_SERVER);
         return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());
     }
 
@@ -109,10 +117,29 @@ public class ADBManagerCLIBuilder {
     }
 
     // adb devices list
-    public ChristelleCLICommand<Void> listEmulatorDevices() {
+    public ChristelleCLICommand<List<ADBDevice>> listEmulatorDevices() {
         ArgumentListBuilder arguments = new ArgumentListBuilder();
         arguments.add("devices");
-        return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());
+        DevicesParse devicesParse = new DevicesParse();
+        return new ChristelleCLICommand<List<ADBDevice>>(executable, arguments, buildEnvVars())
+                .withParser(devicesParse);
+    }
+
+    // adb devices list
+    public ChristelleCLICommand<Boolean> emulatorIsBooted() {
+        ArgumentListBuilder arguments = new ArgumentListBuilder();
+        if (serial != null) {
+            arguments.add("-s", serial);
+        }
+        arguments.add("shell getprop sys.boot_completed");
+        ChristelleCLICommand.OutputParser<Boolean> outputParser = input -> {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
+            String line = reader.readLine();
+            System.out.println("is booted result: " + line);
+            return line != null && line.trim().equals("1");
+        };
+        return new ChristelleCLICommand<Boolean>(executable, arguments, buildEnvVars())
+                .withParser(outputParser);
     }
 
     public static ADBManagerCLIBuilder withSDKRoot(String sdkRoot) {
@@ -151,6 +178,31 @@ public class ADBManagerCLIBuilder {
         }
         env.put(Constants.ENV_ADB_LOCAL_TRANSPORT_MAX_PORT, String.valueOf(5553 + (maxEmulator * 2)));
         return env;
+    }
+
+
+    public static class DevicesParse implements ChristelleCLICommand.OutputParser<List<ADBDevice>> {
+
+        final String LIST_OF_DEVICES_COLUMN = "List of devices attached";
+
+        @Override
+        public List<ADBDevice> parse(InputStream input) throws IOException {
+            List<ADBDevice> emulatorList = new ArrayList<>();
+
+            //List of devices attached
+            //emulator-5554   device
+            for (String line : IOUtils.readLines(input, "UTF-8")) {
+                if (line.contains(LIST_OF_DEVICES_COLUMN)) {
+                    continue;
+                }
+                StringTokenizer st = new StringTokenizer(line, " ");
+                String emulatorName = Util.fixEmptyAndTrim(st.nextToken());
+                String status = Util.fixEmptyAndTrim(st.nextToken());
+                ADBDevice adbDevice = new ADBDevice(emulatorName, status);
+                emulatorList.add(adbDevice);
+            }
+            return emulatorList;
+        }
     }
 
 }

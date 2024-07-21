@@ -25,13 +25,13 @@ public class AVDManagerCLIBuilder implements Cloneable {
     // AVD 路径 eg: --sdk_root=/var/android-sdk
     private final String ARG_SDK_ROOT = "--sdk_root";
     // AVD 名称参数 eg: -n test
-    private final String ARG_AVD_NAME = "-n";
+    //private final String ARG_AVD_NAME = "-n";
     // AVD sdk 包 id eg: -k "system-images;android-25;google_apis;x86"
-    private final String ARG_AVD_SDK_ID = "-k";
+    //private final String ARG_AVD_SDK_ID = "-k";
     // -c {path|size}：此 AVD 的 SD 卡映像的路径，或要为此 AVD 创建的新 SD 卡映像的大小（以 KB 或 MB 为单位，分别以 K 或 M 表示）例如，-c path/to/sdcard/ 或 -c 1000M
-    private final String ARG_AVD_SDCARD_MAPPING = "-c";
+    //private final String ARG_AVD_SDCARD_MAPPING = "-c";
     // AVD 的文件的目录所在位置的路径，未指定路径，则系统会在 ~/.android/avd/ 中创建 AVD，eg: -p /var
-    private final String ARG_AVD_FILE_ROOT = "-p";
+    //private final String ARG_AVD_FILE_ROOT = "-p";
 
     // 设置为静默模拟，不会在控制台打印
     private static final String ARG_SILENT = "--silent";

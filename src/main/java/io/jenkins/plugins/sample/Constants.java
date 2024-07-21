@@ -45,4 +45,6 @@ public interface Constants {
     String LOCAL_REPO_CONFIG = "repositories.cfg";
     String ANDROID_CACHE = ".android";
 
+    String EMULATOR_NAME_PREFIX = "emulator-";
+
 }

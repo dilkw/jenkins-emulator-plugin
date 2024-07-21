@@ -45,6 +45,19 @@ public class Utils {
         return toolsHome;
     }
 
+    public static String getExecutable(boolean isUnix, String sdkRoot, ToolsCommand toolsCommand) {
+        File toolHome = new File(sdkRoot, findInSdkToolsHome(true, toolsCommand, isUnix));
+        if (!toolHome.exists()) {
+            toolHome = new File(sdkRoot, findInSdkToolsHome(false, toolsCommand, isUnix));
+        }
+        File cmd = new File(toolHome, toolsCommand.getExecutable(isUnix));
+        System.out.println("cmd: " + cmd.getPath());
+        if (cmd.exists()) {
+            return cmd.getPath();
+        }
+        return null;
+    }
+
     public static String getExecutable(Platform platform, String sdkRoot, ToolsCommand toolsCommand) {
         boolean isUnix = platform == Platform.LINUX;
         File toolHome = new File(sdkRoot, findInSdkToolsHome(true, toolsCommand, isUnix));
@@ -59,6 +72,7 @@ public class Utils {
         return null;
     }
 
+
     public static FilePath createExecutable(final Launcher launcher, FilePath workspace, String sdkRoot, ToolsCommand toolsCommand) throws InterruptedException, IOException {
         Platform platform = Platform.fromWorkspace(workspace);
         return getFilePath(launcher, platform, sdkRoot, toolsCommand);
@@ -69,9 +83,18 @@ public class Utils {
         return getFilePath(launcher, platform, sdkRoot, toolsCommand);
     }
 
-    private static FilePath getFilePath(Launcher launcher, Platform platform, String sdkRoot, ToolsCommand toolsCommand) throws IOException {
+    public static FilePath getFilePath(Launcher launcher, Platform platform, String sdkRoot, ToolsCommand toolsCommand) throws IOException {
         String executableString = Utils.getExecutable(platform, sdkRoot, toolsCommand);
         final VirtualChannel channel = launcher.getChannel();
+        return createFilePath(channel, sdkRoot, toolsCommand, executableString);
+    }
+
+    public static FilePath getFilePath(VirtualChannel channel, boolean isUnix, String sdkRoot, ToolsCommand toolsCommand) throws IOException {
+        String executableString = Utils.getExecutable(isUnix, sdkRoot, toolsCommand);
+        return createFilePath(channel, sdkRoot, toolsCommand, executableString);
+    }
+
+    private static FilePath createFilePath(VirtualChannel channel, String sdkRoot, ToolsCommand toolsCommand, String executableString) throws IOException {
         if (channel == null) {
             throw new IOException("Unable to get a channel for the launcher");
         }

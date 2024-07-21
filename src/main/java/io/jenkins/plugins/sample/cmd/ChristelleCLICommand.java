@@ -87,6 +87,7 @@ public class ChristelleCLICommand<R> {
         for (String arg : args) {
             stringBuilder.append(" ").append(arg);
         }
+        System.out.println(stringBuilder);
         if (output != null) {
             output.getLogger().println(stringBuilder);
         }
