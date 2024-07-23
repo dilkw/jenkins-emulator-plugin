@@ -164,7 +164,7 @@ public class EmulatorRunner {
             try {
                 isBooted = emulatorIsBooted.executeAsyncReturnData(listener, launcher);
                 listener.getLogger().println("Checking emulator status, attempt isBooted: " + isBooted);
-                List<ADBDevice> adbDevices = emulatorDevicesCommand.execute();
+                List<ADBDevice> adbDevices = emulatorDevicesCommand.executeAsyncReturnData(listener, launcher);
                 for (ADBDevice adbDevice : adbDevices) {
                     if (adbDevice.getEmulatorName().equals(emulatorName) && adbDevice.getStatus().equals("device")) {
                         isDeviceOnline = true;
@@ -172,7 +172,6 @@ public class EmulatorRunner {
                     }
                 }
             }catch (IOException e) {
-                listener.getLogger().println(e.getMessage());
             }
 
             if (!isBooted || !isDeviceOnline) {
@@ -181,10 +180,10 @@ public class EmulatorRunner {
             }
             listener.getLogger().println(" ...wait...");
         }
-        listener.getLogger().println("Emulator had Ready !!!");
         if (!isBooted || !isDeviceOnline) {
             throw new IOException("Emulator did not start or connect to ADB in the given time.");
         }
+        listener.getLogger().println("Emulator had Ready !!!");
     }
 
     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
