@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ADBManagerCLIBuilder {
 
@@ -67,14 +69,6 @@ public class ADBManagerCLIBuilder {
         return this;
     }
 
-    public ADBManagerCLIBuilder addEnvVars(EnvVars envVars) {
-        if (this.env == null) {
-            this.env = new EnvVars();
-        }
-        this.env.putAll(envVars);
-        return this;
-    }
-
     // 启动 adb server
     public ChristelleCLICommand<Void> start() {
         ArgumentListBuilder arguments = buildGlobalOptions();
@@ -100,18 +94,16 @@ public class ADBManagerCLIBuilder {
     // adb kill emulator eg: adb -s emulator-5554 emu kill
     public ChristelleCLICommand<Void> killEmulatorByPort(String...ports) {
         ArgumentListBuilder arguments = new ArgumentListBuilder();
-//        if (serial != null) {
-            if (ports.length > 0) {
-                StringBuilder argumentsBuilder = new StringBuilder();
-                for (int i = 0; i < ports.length; i++) {
-                    argumentsBuilder.append("emulator-").append(ports[i]);
-                    if (i != ports.length - 1) {
-                        arguments.add(",");
-                    }
+        if (ports.length > 0) {
+            StringBuilder argumentsBuilder = new StringBuilder();
+            for (int i = 0; i < ports.length; i++) {
+                argumentsBuilder.append("emulator-").append(ports[i]);
+                if (i != ports.length - 1) {
+                    arguments.add(",");
                 }
-                arguments.add("-s", argumentsBuilder.toString());
             }
-//        }
+            arguments.add("-s", argumentsBuilder.toString());
+        }
         arguments.add(ARG_KILL_EMULATOR);
         return new ChristelleCLICommand<>(executable, arguments, buildEnvVars());
     }
@@ -125,14 +117,19 @@ public class ADBManagerCLIBuilder {
                 .withParser(devicesParse);
     }
 
-    // adb devices list
+    // check emulator is booted
     public ChristelleCLICommand<Boolean> emulatorIsBooted() {
         ArgumentListBuilder arguments = new ArgumentListBuilder();
         if (serial != null) {
             arguments.add("-s", serial);
         }
-        arguments.add("shell getprop sys.boot_completed");
+        //getprop init.svc.bootanim
+        arguments.add("shell");
+        arguments.add("getprop");
+        arguments.add("sys.boot_completed");
+        //arguments.add("init.svc.bootanim");
         ChristelleCLICommand.OutputParser<Boolean> outputParser = input -> {
+            if (input == null) return false;
             BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
             String line = reader.readLine();
             System.out.println("is booted result: " + line);
@@ -188,20 +185,38 @@ public class ADBManagerCLIBuilder {
         @Override
         public List<ADBDevice> parse(InputStream input) throws IOException {
             List<ADBDevice> emulatorList = new ArrayList<>();
-
+            if (input == null) {
+                return emulatorList;
+            }
             //List of devices attached
             //emulator-5554   device
             for (String line : IOUtils.readLines(input, "UTF-8")) {
                 if (line.contains(LIST_OF_DEVICES_COLUMN)) {
                     continue;
                 }
-                StringTokenizer st = new StringTokenizer(line, " ");
-                String emulatorName = Util.fixEmptyAndTrim(st.nextToken());
-                String status = Util.fixEmptyAndTrim(st.nextToken());
-                ADBDevice adbDevice = new ADBDevice(emulatorName, status);
+                String[] strings = parseAdbOutput(line);
+                if (strings == null || strings.length == 0) {
+                    continue;
+                }
+                ADBDevice adbDevice = new ADBDevice(strings[0], strings[1]);
                 emulatorList.add(adbDevice);
             }
             return emulatorList;
+        }
+
+        public static String[] parseAdbOutput(String adbOutput) {
+            // Define the regex pattern
+            String regex = "(\\S+)\\s+(\\S+)";
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(adbOutput);
+
+            // Find matches
+            if (matcher.find()) {
+                String emulatorName = matcher.group(1);
+                String status = matcher.group(2);
+                return new String[]{emulatorName, status};
+            }
+            return null;
         }
     }
 

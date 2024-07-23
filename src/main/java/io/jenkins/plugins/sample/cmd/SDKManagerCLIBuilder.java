@@ -115,22 +115,6 @@ public class SDKManagerCLIBuilder implements Cloneable {
 
     }
 
-    public SDKManagerCLIBuilder addEnvVars(@NonNull EnvVars env) {
-        if (this.env == null) {
-            this.env = new EnvVars();
-        }
-        this.env.putAll(env);
-        return this;
-    }
-
-    public SDKManagerCLIBuilder addEnvVars(@NonNull String key, @NonNull String value) {
-        if (this.env == null) {
-            this.env = new EnvVars();
-        }
-        this.env.put(key, value);
-        return this;
-    }
-
     public SDKManagerCLIBuilder createExecutable(final Launcher launcher, FilePath workspace) throws InterruptedException, IOException {
         this.executable = Utils.createExecutable(launcher, workspace, sdkRoot, ToolsCommand.SDK_MANAGER);
         return this;

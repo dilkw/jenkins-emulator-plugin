@@ -50,13 +50,12 @@ public class EmulatorToolsKillListener extends RunListener<Run<?, ?>> {
             }
             Launcher launcher = new Launcher.RemoteLauncher(listener, channel, platform == Platform.LINUX);
             ADBManagerCLIBuilder adbManagerCLIBuilder = ADBManagerCLIBuilder.withSDKRoot(sdkRoot)
-                    .addEnvVars(envVars)
                     .createExecutable(launcher, filePath);
 
             // 关闭 emulator
-            adbManagerCLIBuilder.killEmulatorByPort(emulatorPort).execute();
+            adbManagerCLIBuilder.killEmulatorByPort(emulatorPort).withEnv(envVars).execute();
             // 关闭 adb server
-            adbManagerCLIBuilder.stop();
+            adbManagerCLIBuilder.stop().withEnv(envVars);
             listener.getLogger().println("killServiceAfterBuild tearDown");
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);

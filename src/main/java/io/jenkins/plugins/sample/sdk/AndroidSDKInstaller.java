@@ -124,10 +124,10 @@ public class AndroidSDKInstaller extends DownloadFromUrlInstaller {
 
         SDKPackages packages = SDKManagerCLIBuilder.withSDKRoot(sdkRoot.getRemote())
                 .createExecutableFormPlatform(sdkRoot.createLauncher(log), platform)
-                .addEnvVars(Constants.ENV_VAR_ANDROID_SDK_HOME, androidHome)
                 .setProxy(Jenkins.get().proxy)
                 .setChannel(channel)
                 .list()
+                .withEnv(Constants.ENV_VAR_ANDROID_SDK_HOME, androidHome) //
                 .execute();
 
         // remove components already installed
@@ -162,8 +162,8 @@ public class AndroidSDKInstaller extends DownloadFromUrlInstaller {
                     .createExecutableFormPlatform(sdkRoot.createLauncher(log), platform)
                     .setProxy(Jenkins.get().proxy) //
                     .setChannel(channel) //
-                    .addEnvVars(Constants.ENV_VAR_ANDROID_SDK_ROOT, androidHome)
                     .installSDK(components) //
+                    .withEnv(Constants.ENV_VAR_ANDROID_SDK_ROOT, androidHome)
                     .execute(log);
         }
     }

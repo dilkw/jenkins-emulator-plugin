@@ -47,4 +47,7 @@ public interface Constants {
 
     String EMULATOR_NAME_PREFIX = "emulator-";
 
+    /** Duration by which emulator booting should normally complete. */
+    int BOOT_COMPLETE_TIMEOUT_MS = 360 * 1000;
+
 }
